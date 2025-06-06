@@ -12,13 +12,27 @@
 5. `predict.py` で分類結果ラスタを生成します。
 6. `app.py` をStreamlitで実行し、folium地図上で結果を確認できます。
 
+## Directory layout
+
+```
+data/
+    raw/        # Original satellite downloads and label rasters
+    processed/  # Intermediate files generated during processing
+notebooks/      # Exploratory notebooks
+scripts/        # Utility scripts such as data download helpers
+outputs/        # Final prediction rasters and reports
+```
+
+Raw GeoTIFFs and labels should be stored in `data/raw/`. Intermediate files
+written by the pipeline can be kept under `data/processed/`.
+
 ## Sentinel-2 を用いた土地利用分類
 
-`data/` フォルダに以下の Sentinel-2 バンド (`B02`, `B03`, `B04`, `B08`, `B11`) と
+`data/raw/` フォルダに以下の Sentinel-2 バンド (`B02`, `B03`, `B04`, `B08`, `B11`) と
 QA バンド(`QA60`)、学習用ラベル(`labels.tif`) を配置します。
 
 ```bash
-data/
+data/raw/
 ├── B02.tif
 ├── B03.tif
 ├── B04.tif
@@ -34,9 +48,9 @@ data/
 
 ```bash
 python -m src.classification.pipeline \
-  --bands data/B02.tif data/B03.tif data/B04.tif data/B08.tif data/B11.tif \
-  --qa data/QA60.tif \
-  --labels data/labels.tif \
+  --bands data/raw/B02.tif data/raw/B03.tif data/raw/B04.tif data/raw/B08.tif data/raw/B11.tif \
+  --qa data/raw/QA60.tif \
+  --labels data/raw/labels.tif \
   --output outputs/prediction.tif
 ```
 
