@@ -33,7 +33,7 @@ data/
 まず以下のコマンドで分類を実行してラスタを生成します。
 
 ```bash
-python src/classification/pipeline.py \
+python -m src.classification.pipeline \
   --bands data/B02.tif data/B03.tif data/B04.tif data/B08.tif data/B11.tif \
   --qa data/QA60.tif \
   --labels data/labels.tif \
@@ -79,7 +79,7 @@ remote_sensing/
 For a one-shot workflow using Sentinel‑2 bands you can also execute:
 
 ```bash
-python src/classification/pipeline.py --help
+python -m src.classification.pipeline --help
 ```
 
 
