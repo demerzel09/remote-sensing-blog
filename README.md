@@ -63,7 +63,11 @@ streamlit run src/app.py
 This repository contains a minimal example of a Python pipeline for basic remote sensing analysis. The code is structured for future extensions such as polygon data integration and asset value analysis.
 
 ## Installation
-Run `pip install -r requirements.txt` to create a reproducible Python environment.
+Use the helper script to create a virtual environment and install the dependencies:
+
+```bash
+bash scripts/setup_env.sh
+```
 
 
 
@@ -101,6 +105,12 @@ python -m src.classification.pipeline --help
 
 
 ## Running the pipeline
+
+Before executing the pipeline make sure the environment is ready:
+
+```bash
+bash scripts/setup_env.sh
+```
 
 The `remote_sensing.pipeline` module exposes a `run_pipeline` function and a simple CLI. It expects preprocessed NumPy arrays for the red and near-infrared bands.
 
