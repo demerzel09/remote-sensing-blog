@@ -12,6 +12,40 @@
 5. `predict.py` で分類結果ラスタを生成します。
 6. `app.py` をStreamlitで実行し、folium地図上で結果を確認できます。
 
+## Sentinel-2 を用いた土地利用分類
+
+`data/` フォルダに以下の Sentinel-2 バンド (`B02`, `B03`, `B04`, `B08`, `B11`) と
+QA バンド(`QA60`)、学習用ラベル(`labels.tif`) を配置します。
+
+```bash
+data/
+├── B02.tif
+├── B03.tif
+├── B04.tif
+├── B08.tif
+├── B11.tif
+├── QA60.tif
+└── labels.tif
+```
+
+### 3. ランドサット・土地利用分類の実行と表示
+
+まず以下のコマンドで分類を実行してラスタを生成します。
+
+```bash
+python src/classification/pipeline.py \
+  --bands data/B02.tif data/B03.tif data/B04.tif data/B08.tif data/B11.tif \
+  --qa data/QA60.tif \
+  --labels data/labels.tif \
+  --output outputs/prediction.tif
+```
+
+生成された `outputs/prediction.tif` を表示するには次のコマンドを実行します。
+
+```bash
+streamlit run src/app.py
+```
+
 This repository contains a minimal example of a Python pipeline for basic remote sensing analysis. The code is structured for future extensions such as polygon data integration and asset value analysis.
 
 
@@ -41,6 +75,13 @@ remote_sensing/
 4. Train a RandomForest model using `train_model.py` and your label raster.
 5. Apply the model with `predict.py` to generate a classification raster.
 6. View results in a Streamlit app (`app.py`).
+
+For a one-shot workflow using Sentinel‑2 bands you can also execute:
+
+```bash
+python src/classification/pipeline.py --help
+```
+
 
 ## Running the pipeline
 
