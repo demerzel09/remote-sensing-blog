@@ -1,6 +1,6 @@
-numpy
-rasterio
-scikit-learn
-streamlit
-folium
-streamlit_folium
+numpy==1.26.4
+rasterio==1.3.9
+scikit-learn==1.4.1
+streamlit==1.31.1
+folium==0.15.1
+streamlit_folium==0.11.2

@@ -48,6 +48,9 @@ streamlit run src/app.py
 
 This repository contains a minimal example of a Python pipeline for basic remote sensing analysis. The code is structured for future extensions such as polygon data integration and asset value analysis.
 
+## Installation
+Run `pip install -r requirements.txt` to create a reproducible Python environment.
+
 
 
 ## Structure
