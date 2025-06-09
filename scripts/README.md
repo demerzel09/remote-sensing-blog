@@ -18,13 +18,21 @@ source venv/bin/activate
 
 ## `download_sentinel.py`
 Downloads Sentinel imagery from the Copernicus Open Access Hub.
-It caches files inside `data/raw/<SATELLITE>` based on the selected location and
- date range.
+The module resides under `src/utils/` and caches files inside
+`data/raw/<SATELLITE>` based on the selected location and date range.
 
 Example usage:
 
 ```bash
 export SENTINEL_USER=<your username>
 export SENTINEL_PASSWORD=<your password>
-python scripts/download_sentinel.py --lat 35.6 --lon 139.7 --start 2024-01-01 --end 2024-01-31
+python -m src.utils.download_sentinel --lat 35.6 --lon 139.7 --start 2024-01-01 --end 2024-01-31
+```
+
+## `run_sentinel2_pipeline.sh`
+A helper script that runs the full Sentinel-2 workflow using the configuration
+files stored in `configs/`.
+
+```bash
+bash scripts/run_sentinel2_pipeline.sh
 ```

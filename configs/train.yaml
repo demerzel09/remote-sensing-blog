@@ -1,0 +1,4 @@
+features: data/processed/features.npz
+labels: data/raw/labels.tif
+model_out: outputs/model.pkl
+n_estimators: 100
