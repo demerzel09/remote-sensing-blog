@@ -69,6 +69,9 @@ Use the helper script to create a virtual environment and install the dependenci
 bash scripts/setup_env.sh
 ```
 
+Python 3.10 or higher is required because the code uses new union type
+annotations such as `str | Path`.
+
 
 
 ## Structure
