@@ -8,6 +8,5 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT_DIR="data/raw/example_run"
 CONFIG="configs/download.yaml"
 
-python -m src.pipeline.download --config "$CONFIG" --output "$OUTPUT_DIR" \
-  # --api-url https://alternative.example.com/apihub
+python -m src.pipeline.download --config "$CONFIG" --output "$OUTPUT_DIR"
 
