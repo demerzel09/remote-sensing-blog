@@ -105,14 +105,15 @@ NumPy arrays only.
 
 You can fetch sample imagery directly from the Copernicus Data Space using
 `src/utils/download_sentinel.py`. The tool connects to
-`https://apihub.copernicus.eu/apihub` and caches downloads under
-`data/raw/<SATELLITE>` based on location and time range.
+`https://apihub.copernicus.eu/apihub` by default and caches downloads under
+`data/raw/<SATELLITE>` based on location and time range. Use `--api-url` to
+override the endpoint if needed.
 
 > **Note**
 > The download scripts require outbound HTTPS access to
-> `apihub.copernicus.eu`. Connection issues such as timeouts or
-> "No route to host" usually mean your network is restricted. Configure a
-> proxy if needed.
+> `apihub.copernicus.eu` (or the URL passed via `--api-url`). Connection
+> issues such as timeouts or "No route to host" usually mean your network is
+> restricted. Configure a proxy if needed.
 
 ```bash
 export SENTINEL_USER=<your username>
@@ -121,7 +122,8 @@ python -m src.utils.download_sentinel \
   --lat 35.6 \
   --lon 139.7 \
   --start 2024-01-01 \
-  --end 2024-01-31
+  --end 2024-01-31 \
+  # --api-url https://alternative.example.com/apihub
 ```
 
 If the target folder already exists the previously downloaded data will be
