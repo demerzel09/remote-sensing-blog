@@ -1,8 +1,8 @@
 # Using Sentinelsat
 
-This project uses **sentinelsat** to download Sentinel imagery from the Copernicus Open Access Hub. You need a valid account in order to authenticate.
+This project uses **sentinelsat** to download Sentinel imagery from the Copernicus Data Space Ecosystem. You need a valid account in order to authenticate.
 
-1. Visit <https://scihub.copernicus.eu/dhus/#/self-registration> and create an account.
+1. Visit <https://shapps.dataspace.copernicus.eu/dashboard/#/> and sign up for an account.
 2. After registration, note your username and password.
 3. Set them as environment variables before running `download_sentinel.py`:
 
