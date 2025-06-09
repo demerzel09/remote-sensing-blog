@@ -103,7 +103,6 @@ def download_sentinel(
     config.sh_base_url = os.getenv(
         "SH_BASE_URL", "https://sh.dataspace.copernicus.eu"
     )
-
     bbox = BBox(
         (lon - buffer, lat - buffer, lon + buffer, lat + buffer), crs=CRS.WGS84
     )
