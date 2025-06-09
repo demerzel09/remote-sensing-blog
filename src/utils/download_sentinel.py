@@ -81,7 +81,7 @@ def download_sentinel(
     if not user or not password:
         raise RuntimeError("Set SENTINEL_USER and SENTINEL_PASSWORD environment variables")
 
-    api = SentinelAPI(user, password, "https://scihub.copernicus.eu/dhus")
+    api = SentinelAPI(user, password, "https://apihub.copernicus.eu/apihub")
     footprint = f"POINT({lon} {lat})"
     norm_start = normalize_date(start)
     norm_end = normalize_date(end)

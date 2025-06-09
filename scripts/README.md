@@ -17,7 +17,8 @@ source venv/bin/activate
 ```
 
 ## `download_sentinel.py`
-Downloads Sentinel imagery from the Copernicus Open Access Hub.
+Downloads Sentinel imagery from the Copernicus Data Space via
+`https://apihub.copernicus.eu/apihub`.
 The module resides under `src/utils/` and caches files inside
 `data/raw/<SATELLITE>` based on the selected location and date range. When run
 with a YAML configuration, the file is copied into the download directory for

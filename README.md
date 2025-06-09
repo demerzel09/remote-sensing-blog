@@ -103,8 +103,9 @@ NumPy arrays only.
 
 ### Automated Sentinel‑2 download
 
-You can fetch sample imagery directly from the Copernicus Open Access Hub using
-`src/utils/download_sentinel.py`. The module caches downloads under
+You can fetch sample imagery directly from the Copernicus Data Space using
+`src/utils/download_sentinel.py`. The tool connects to
+`https://apihub.copernicus.eu/apihub` and caches downloads under
 `data/raw/<SATELLITE>` based on location and time range.
 
 ```bash
