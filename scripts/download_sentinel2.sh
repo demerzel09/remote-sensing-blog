@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 OUTPUT_DIR CONFIG" >&2
-    exit 1
-fi
+# Directory containing this script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-OUTPUT_DIR="$1"
-CONFIG="$2"
+# Hard coded paths for a single example run
+OUTPUT_DIR="data/raw/example_run"
+CONFIG="configs/download.yaml"
 
 python -m src.pipeline.download --config "$CONFIG" --output "$OUTPUT_DIR"
 
