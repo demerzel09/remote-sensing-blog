@@ -128,7 +128,7 @@ python -m src.utils.download_sentinel \
 If the target folder already exists the previously downloaded data will be
 reused.
 
-See [docs/sentinelsat_setup.md](docs/sentinelsat_setup.md) for details on
+See [docs/sentinelhub_setup.md](docs/sentinelhub_setup.md) for details on
 creating an account and setting these variables.
 
 ## Usage
