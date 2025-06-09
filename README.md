@@ -116,6 +116,7 @@ under `data/raw/<SATELLITE>` based on location and time range.
 ```bash
 export SENTINELHUB_CLIENT_ID=<your client id>
 export SENTINELHUB_CLIENT_SECRET=<your client secret>
+export SH_BASE_URL=https://sh.dataspace.copernicus.eu
 python -m src.utils.download_sentinel \
   --lat 35.6 \
   --lon 139.7 \
