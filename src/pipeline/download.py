@@ -1,8 +1,6 @@
 import argparse
 from pathlib import Path
 import shutil
-import yaml
-
 from ..utils import download_sentinel
 
 
