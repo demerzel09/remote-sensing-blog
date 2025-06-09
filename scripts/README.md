@@ -18,7 +18,8 @@ source venv/bin/activate
 
 ## `download_sentinel.py`
 Downloads Sentinel imagery from the Copernicus Data Space via
-`https://apihub.copernicus.eu/apihub`.
+`https://apihub.copernicus.eu/apihub` by default.
+Pass `--api-url` to use a different endpoint.
 The module resides under `src/utils/` and caches files inside
 `data/raw/<SATELLITE>` based on the selected location and date range. When run
 with a YAML configuration, the file is copied into the download directory for
@@ -29,7 +30,8 @@ Example usage:
 ```bash
 export SENTINEL_USER=<your username>
 export SENTINEL_PASSWORD=<your password>
-python -m src.utils.download_sentinel --lat 35.6 --lon 139.7 --start 2024-01-01 --end 2024-01-31
+python -m src.utils.download_sentinel --lat 35.6 --lon 139.7 --start 2024-01-01 --end 2024-01-31 \
+  # --api-url https://alternative.example.com/apihub
 ```
 
 ## `run_sentinel2_pipeline.sh`

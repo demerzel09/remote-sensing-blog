@@ -12,6 +12,8 @@ from pathlib import Path
 from datetime import datetime
 from sentinelsat import SentinelAPI
 
+DEFAULT_API_URL = "https://apihub.copernicus.eu/apihub"
+
 
 def normalize_date(value: str) -> str:
     """Return date in YYYYMMDD format."""
@@ -43,6 +45,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--end", help="End date YYYY-MM-DD or YYYYMMDD")
     parser.add_argument("--satellite", default="Sentinel-2", help="Satellite platform name")
     parser.add_argument("--output", help="Output directory for downloaded data")
+    parser.add_argument("--api-url", default=DEFAULT_API_URL, help="Sentinel API endpoint")
     args = parser.parse_args()
     if args.config:
         with open(args.config) as f:
@@ -64,6 +67,7 @@ def download_sentinel(
     end: str,
     satellite: str = "Sentinel-2",
     out_dir: str | Path | None = None,
+    api_url: str = DEFAULT_API_URL,
 ) -> Path:
     """Download Sentinel products and return the output directory."""
     if out_dir is None:
@@ -81,7 +85,7 @@ def download_sentinel(
     if not user or not password:
         raise RuntimeError("Set SENTINEL_USER and SENTINEL_PASSWORD environment variables")
 
-    api = SentinelAPI(user, password, "https://apihub.copernicus.eu/apihub")
+    api = SentinelAPI(user, password, api_url)
     footprint = f"POINT({lon} {lat})"
     norm_start = normalize_date(start)
     norm_end = normalize_date(end)
@@ -101,7 +105,11 @@ def download_sentinel(
     return out_dir
 
 
-def download_from_config(config_path: str | Path, output_dir: str | Path | None = None) -> Path:
+def download_from_config(
+    config_path: str | Path,
+    output_dir: str | Path | None = None,
+    api_url: str = DEFAULT_API_URL,
+) -> Path:
     with open(config_path) as f:
         cfg = yaml.safe_load(f)
     return download_sentinel(
@@ -111,6 +119,7 @@ def download_from_config(config_path: str | Path, output_dir: str | Path | None 
         end=cfg["end"],
         satellite=cfg.get("satellite", "Sentinel-2"),
         out_dir=output_dir,
+        api_url=api_url,
     )
 
 
@@ -123,6 +132,7 @@ def main() -> None:
         args.end,
         args.satellite,
         out_dir=args.output,
+        api_url=args.api_url,
     )
     if args.config:
         shutil.copy(args.config, Path(out_dir) / Path(args.config).name)
