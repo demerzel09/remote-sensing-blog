@@ -103,13 +103,13 @@ NumPy arrays only.
 ### Automated Sentinel‑2 download
 
 You can fetch sample imagery directly from the Copernicus Open Access Hub using
-`scripts/download_sentinel.py`. The script caches downloads under
+`src/utils/download_sentinel.py`. The module caches downloads under
 `data/raw/<SATELLITE>` based on location and time range.
 
 ```bash
 export SENTINEL_USER=<your username>
 export SENTINEL_PASSWORD=<your password>
-python scripts/download_sentinel.py \
+python -m src.utils.download_sentinel \
   --lat 35.6 \
   --lon 139.7 \
   --start 2024-01-01 \
@@ -135,6 +135,15 @@ For a one-shot workflow using Sentinel‑2 bands you can also execute:
 
 ```bash
 python -m src.classification.pipeline --help
+```
+
+### Config based Sentinel-2 workflow
+
+Each processing step accepts a YAML configuration file. Example configs are in
+the `configs/` directory. Run the full workflow with:
+
+```bash
+bash scripts/run_sentinel2_pipeline.sh
 ```
 
 

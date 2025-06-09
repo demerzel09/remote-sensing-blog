@@ -1,0 +1,3 @@
+features: data/processed/features.npz
+model: outputs/model.pkl
+output: outputs/prediction.tif
