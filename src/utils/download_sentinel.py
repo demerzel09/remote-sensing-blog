@@ -9,7 +9,18 @@ import shutil
 import yaml
 from pathlib import Path
 
+from datetime import datetime
 from sentinelsat import SentinelAPI
+
+
+def normalize_date(value: str) -> str:
+    """Return date in YYYYMMDD format."""
+    if "-" in value:
+        try:
+            return datetime.strptime(value, "%Y-%m-%d").strftime("%Y%m%d")
+        except ValueError:
+            pass
+    return value
 
 
 def build_output_dir(satellite: str, lat: float, lon: float, start: str, end: str) -> Path:
@@ -28,8 +39,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--config", help="YAML config file with download parameters")
     parser.add_argument("--lat", type=float, help="Latitude")
     parser.add_argument("--lon", type=float, help="Longitude")
-    parser.add_argument("--start", help="Start date YYYY-MM-DD")
-    parser.add_argument("--end", help="End date YYYY-MM-DD")
+    parser.add_argument("--start", help="Start date YYYY-MM-DD or YYYYMMDD")
+    parser.add_argument("--end", help="End date YYYY-MM-DD or YYYYMMDD")
     parser.add_argument("--satellite", default="Sentinel-2", help="Satellite platform name")
     parser.add_argument("--output", help="Output directory for downloaded data")
     args = parser.parse_args()
@@ -72,9 +83,11 @@ def download_sentinel(
 
     api = SentinelAPI(user, password, "https://scihub.copernicus.eu/dhus")
     footprint = f"POINT({lon} {lat})"
+    norm_start = normalize_date(start)
+    norm_end = normalize_date(end)
     products = api.query(
         footprint,
-        date=(start, end),
+        date=(norm_start, norm_end),
         platformname=satellite,
         processinglevel="Level-2A",
     )
