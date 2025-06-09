@@ -31,6 +31,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--start", help="Start date YYYY-MM-DD")
     parser.add_argument("--end", help="End date YYYY-MM-DD")
     parser.add_argument("--satellite", default="Sentinel-2", help="Satellite platform name")
+    parser.add_argument("--output", help="Output directory for downloaded data")
     args = parser.parse_args()
     if args.config:
         with open(args.config) as f:
@@ -45,9 +46,20 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
-def download_sentinel(lat: float, lon: float, start: str, end: str, satellite: str = "Sentinel-2") -> Path:
+def download_sentinel(
+    lat: float,
+    lon: float,
+    start: str,
+    end: str,
+    satellite: str = "Sentinel-2",
+    out_dir: str | Path | None = None,
+) -> Path:
     """Download Sentinel products and return the output directory."""
-    out_dir = build_output_dir(satellite, lat, lon, start, end)
+    if out_dir is None:
+        out_dir = build_output_dir(satellite, lat, lon, start, end)
+    else:
+        out_dir = Path(out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
 
     if any(out_dir.iterdir()):
         print(f"Using cached data in {out_dir}")
@@ -76,7 +88,7 @@ def download_sentinel(lat: float, lon: float, start: str, end: str, satellite: s
     return out_dir
 
 
-def download_from_config(config_path: str | Path) -> Path:
+def download_from_config(config_path: str | Path, output_dir: str | Path | None = None) -> Path:
     with open(config_path) as f:
         cfg = yaml.safe_load(f)
     return download_sentinel(
@@ -85,12 +97,20 @@ def download_from_config(config_path: str | Path) -> Path:
         start=cfg["start"],
         end=cfg["end"],
         satellite=cfg.get("satellite", "Sentinel-2"),
+        out_dir=output_dir,
     )
 
 
 def main() -> None:
     args = parse_args()
-    out_dir = download_sentinel(args.lat, args.lon, args.start, args.end, args.satellite)
+    out_dir = download_sentinel(
+        args.lat,
+        args.lon,
+        args.start,
+        args.end,
+        args.satellite,
+        out_dir=args.output,
+    )
     if args.config:
         shutil.copy(args.config, Path(out_dir) / Path(args.config).name)
 
