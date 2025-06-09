@@ -31,8 +31,12 @@ export SENTINELHUB_CLIENT_ID=<your client id>
 export SENTINELHUB_CLIENT_SECRET=<your client secret>
 export SH_BASE_URL=https://sh.dataspace.copernicus.eu
 export SH_AUTH_BASE_URL=https://identity.dataspace.copernicus.eu
-python -m src.utils.download_sentinel --lat 35.6 --lon 139.7 --start 2024-01-01 --end 2024-01-31
+python -m src.utils.download_sentinel \
+  --lat 35.6 --lon 139.7 --start 2024-01-01 --end 2024-01-31
 ```
+
+Use `--sh-base-url` and `--sh-auth-base-url` to override the service and
+authentication endpoints instead of the environment variables.
 
 ## `run_sentinel2_pipeline.sh`
 A helper script that runs the full Sentinel-2 workflow using the configuration
