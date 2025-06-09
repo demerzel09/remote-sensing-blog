@@ -1,5 +1,6 @@
 # remote-sensing-blog
 
+This project is licensed under the MIT License.
 
 ## 日本語の説明
 
