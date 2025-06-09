@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ "$#" -ne 4 ]; then
-    echo "Usage: $0 FEATURES_DIR MODEL_DIR OUTPUT_DIR CONFIG" >&2
-    exit 1
-fi
+# Directory containing this script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-FEATURES_DIR="$1"
-MODEL_DIR="$2"
-OUTPUT_DIR="$3"
-CONFIG="$4"
+# Hard coded paths for a single example run
+FEATURES_DIR="data/processed/example_run"
+MODEL_DIR="outputs/model_example"
+OUTPUT_DIR="outputs/prediction_example"
+CONFIG="configs/predict.yaml"
 
 python -m src.pipeline.predict --config "$CONFIG" \
     --features-dir "$FEATURES_DIR" --model-dir "$MODEL_DIR" \
