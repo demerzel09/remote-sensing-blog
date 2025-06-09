@@ -99,6 +99,8 @@ def download_sentinel(
     config = SHConfig()
     config.sh_client_id = client_id
     config.sh_client_secret = client_secret
+    # Use the Copernicus Data Space endpoint
+    config.sh_base_url = "https://sh.dataspace.copernicus.eu"
 
     bbox = BBox(
         (lon - buffer, lat - buffer, lon + buffer, lat + buffer), crs=CRS.WGS84

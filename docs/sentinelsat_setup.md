@@ -11,6 +11,7 @@ application to obtain a client ID and secret.
 ```bash
 export SENTINELHUB_CLIENT_ID=<your client id>
 export SENTINELHUB_CLIENT_SECRET=<your client secret>
+export SH_BASE_URL=https://sh.dataspace.copernicus.eu
 ```
 
 Downloads are cached under `data/raw/<SATELLITE>` based on the selected
