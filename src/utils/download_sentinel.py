@@ -1,34 +1,40 @@
 #!/usr/bin/env python
-"""Download Sentinel data into the data/raw directory with caching."""
-
+"""Download Sentinel-2 imagery using sentinelhub-py."""
 from __future__ import annotations
 
 import argparse
 import os
 import shutil
-import yaml
 from pathlib import Path
 
+import yaml
 from datetime import datetime
-from sentinelsat import SentinelAPI
-
-DEFAULT_API_URL = "https://apihub.copernicus.eu/apihub"
+from sentinelhub import (
+    SHConfig,
+    SentinelHubCatalog,
+    SentinelHubRequest,
+    DataCollection,
+    MimeType,
+    BBox,
+    CRS,
+    bbox_to_dimensions,
+)
 
 
 def normalize_date(value: str) -> str:
-    """Return date in YYYYMMDD format."""
+    """Return date in YYYY-MM-DD format."""
     if "-" in value:
         try:
-            return datetime.strptime(value, "%Y-%m-%d").strftime("%Y%m%d")
+            datetime.strptime(value, "%Y-%m-%d")
+            return value
         except ValueError:
             pass
-    return value
+    return datetime.strptime(value, "%Y%m%d").strftime("%Y-%m-%d")
 
 
 def build_output_dir(satellite: str, lat: float, lon: float, start: str, end: str) -> Path:
-    """Construct and create an output directory based on query parameters."""
+    """Construct output directory based on query parameters."""
     base = Path("data/raw") / satellite
-    # limit decimals to 4 places to keep path short and consistent
     loc = f"{lat:.4f}_{lon:.4f}"
     name = f"{loc}_{start}_{end}"
     out_dir = base / name
@@ -37,15 +43,14 @@ def build_output_dir(satellite: str, lat: float, lon: float, start: str, end: st
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Download Sentinel imagery with caching")
-    parser.add_argument("--config", help="YAML config file with download parameters")
+    parser = argparse.ArgumentParser(description="Download Sentinel imagery")
+    parser.add_argument("--config", help="YAML config with lat/lon/date params")
     parser.add_argument("--lat", type=float, help="Latitude")
     parser.add_argument("--lon", type=float, help="Longitude")
     parser.add_argument("--start", help="Start date YYYY-MM-DD or YYYYMMDD")
     parser.add_argument("--end", help="End date YYYY-MM-DD or YYYYMMDD")
-    parser.add_argument("--satellite", default="Sentinel-2", help="Satellite platform name")
-    parser.add_argument("--output", help="Output directory for downloaded data")
-    parser.add_argument("--api-url", default=DEFAULT_API_URL, help="Sentinel API endpoint")
+    parser.add_argument("--satellite", default="Sentinel-2", help="Platform name")
+    parser.add_argument("--output", help="Output directory")
     args = parser.parse_args()
     if args.config:
         with open(args.config) as f:
@@ -60,6 +65,9 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
+BANDS = ["B02", "B03", "B04", "B08", "B11", "QA60"]
+
+
 def download_sentinel(
     lat: float,
     lon: float,
@@ -67,9 +75,10 @@ def download_sentinel(
     end: str,
     satellite: str = "Sentinel-2",
     out_dir: str | Path | None = None,
-    api_url: str = DEFAULT_API_URL,
+    buffer: float = 0.005,
+    resolution: int = 10,
 ) -> Path:
-    """Download Sentinel products and return the output directory."""
+    """Download selected bands using sentinelhub."""
     if out_dir is None:
         out_dir = build_output_dir(satellite, lat, lon, start, end)
     else:
@@ -80,35 +89,68 @@ def download_sentinel(
         print(f"Using cached data in {out_dir}")
         return out_dir
 
-    user = os.getenv("SENTINEL_USER")
-    password = os.getenv("SENTINEL_PASSWORD")
-    if not user or not password:
-        raise RuntimeError("Set SENTINEL_USER and SENTINEL_PASSWORD environment variables")
+    client_id = os.getenv("SENTINELHUB_CLIENT_ID")
+    client_secret = os.getenv("SENTINELHUB_CLIENT_SECRET")
+    if not client_id or not client_secret:
+        raise RuntimeError(
+            "Set SENTINELHUB_CLIENT_ID and SENTINELHUB_CLIENT_SECRET environment variables"
+        )
 
-    api = SentinelAPI(user, password, api_url)
-    footprint = f"POINT({lon} {lat})"
-    norm_start = normalize_date(start)
-    norm_end = normalize_date(end)
-    products = api.query(
-        footprint,
-        date=(norm_start, norm_end),
-        platformname=satellite,
-        processinglevel="Level-2A",
+    config = SHConfig()
+    config.sh_client_id = client_id
+    config.sh_client_secret = client_secret
+
+    bbox = BBox(
+        (lon - buffer, lat - buffer, lon + buffer, lat + buffer), crs=CRS.WGS84
     )
-
-    if not products:
+    catalog = SentinelHubCatalog(config=config)
+    search = catalog.search(
+        DataCollection.SENTINEL2_L2A, bbox=bbox, time=(start, end), fields={"include": ["id"]}
+    )
+    if not list(search):
         print("No products found for given parameters")
         return out_dir
 
-    api.download_all(products, directory_path=str(out_dir))
-    print(f"Downloaded {len(products)} product(s) to {out_dir}")
+    size = bbox_to_dimensions(bbox, resolution=resolution)
+
+    for band in BANDS:
+        evalscript = f"""
+        //VERSION=3
+        function setup() {{
+            return {{
+                input: [{{bands: [\"{band}\"], units: \"DN\"}}],
+                output: {{bands: 1, sampleType: \"UINT16\"}}
+            }};
+        }}
+        function evaluatePixel(sample) {{
+            return [sample.{band}];
+        }}
+        """
+        request = SentinelHubRequest(
+            data_folder=str(out_dir),
+            evalscript=evalscript,
+            input_data=[
+                SentinelHubRequest.input_data(
+                    data_collection=DataCollection.SENTINEL2_L2A,
+                    time_interval=(start, end),
+                )
+            ],
+            responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],
+            bbox=bbox,
+            size=size,
+            config=config,
+        )
+        request.get_data(save_data=True)
+        saved = Path(request.get_filename_list()[0])
+        (out_dir / f"{band}.tif").write_bytes(saved.read_bytes())
+        saved.unlink()
+
+    print(f"Downloaded {len(BANDS)} band TIFFs to {out_dir}")
     return out_dir
 
 
 def download_from_config(
-    config_path: str | Path,
-    output_dir: str | Path | None = None,
-    api_url: str = DEFAULT_API_URL,
+    config_path: str | Path, output_dir: str | Path | None = None
 ) -> Path:
     with open(config_path) as f:
         cfg = yaml.safe_load(f)
@@ -119,20 +161,13 @@ def download_from_config(
         end=cfg["end"],
         satellite=cfg.get("satellite", "Sentinel-2"),
         out_dir=output_dir,
-        api_url=api_url,
     )
 
 
 def main() -> None:
     args = parse_args()
     out_dir = download_sentinel(
-        args.lat,
-        args.lon,
-        args.start,
-        args.end,
-        args.satellite,
-        out_dir=args.output,
-        api_url=args.api_url,
+        args.lat, args.lon, args.start, args.end, args.satellite, args.output
     )
     if args.config:
         shutil.copy(args.config, Path(out_dir) / Path(args.config).name)
