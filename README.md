@@ -140,8 +140,9 @@ python -m src.classification.pipeline --help
 
 ### Config based Sentinel-2 workflow
 
-Each processing step accepts a YAML configuration file. Example configs are in
-the `configs/` directory. Run the full workflow with:
+Each processing step accepts a YAML configuration file and writes a copy of
+that file into its output directory for reference. Example configs are in the
+`configs/` directory. Run the full workflow with:
 
 ```bash
 bash scripts/run_sentinel2_pipeline.sh
