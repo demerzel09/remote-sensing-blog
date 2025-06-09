@@ -1,5 +1,4 @@
 import numpy as np
-from .train_model import train_model
 from ..utils import io_raster
 
 
