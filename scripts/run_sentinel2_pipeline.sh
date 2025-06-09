@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-python -m src.pipeline.download --config configs/download.yaml
-python -m src.pipeline.preprocess --config configs/preprocess.yaml
-python -m src.pipeline.train --config configs/train.yaml
-python -m src.pipeline.predict --config configs/predict.yaml
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+DOWNLOAD_DIR="data/raw/example_run"
+FEATURE_DIR="data/processed/example_run"
+MODEL_DIR="outputs/model_example"
+PREDICT_DIR="outputs/prediction_example"
+
+bash "$SCRIPT_DIR/download_sentinel2.sh" "$DOWNLOAD_DIR" configs/download.yaml
+bash "$SCRIPT_DIR/preprocess_sentinel2.sh" "$DOWNLOAD_DIR" "$FEATURE_DIR" configs/preprocess.yaml
+bash "$SCRIPT_DIR/train_model.sh" "$FEATURE_DIR" "$MODEL_DIR" configs/train.yaml
+bash "$SCRIPT_DIR/predict_sentinel2.sh" "$FEATURE_DIR" "$MODEL_DIR" "$PREDICT_DIR" configs/predict.yaml
 

@@ -148,6 +148,15 @@ that file into its output directory for reference. Example configs are in the
 bash scripts/run_sentinel2_pipeline.sh
 ```
 
+Individual steps can also be executed via the helper scripts in `scripts/`:
+
+```bash
+bash scripts/download_sentinel2.sh <out_dir> configs/download.yaml
+bash scripts/preprocess_sentinel2.sh <download_dir> <features_dir> configs/preprocess.yaml
+bash scripts/train_model.sh <features_dir> <model_dir> configs/train.yaml
+bash scripts/predict_sentinel2.sh <features_dir> <model_dir> <pred_dir> configs/predict.yaml
+```
+
 
 ## Running the pipeline
 
