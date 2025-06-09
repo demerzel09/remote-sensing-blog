@@ -82,6 +82,15 @@ remote_sensing/
 └── polygon.py         # Placeholder for polygon support
 ```
 
+`src/` contains the main raster classification workflow built on top of
+`rasterio`. The `remote_sensing/` folder is a small example that works with raw
+NumPy arrays only.
+
+| Package | Purpose |
+| ------- | ------- |
+| `src/` | Full raster-based classification pipeline |
+| `remote_sensing/` | Minimal NDVI example using NumPy |
+
 ## Data requirements
 
 - Sentinel/Landsat like bands saved as individual GeoTIFF files
