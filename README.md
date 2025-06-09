@@ -108,6 +108,12 @@ You can fetch sample imagery directly from the Copernicus Data Space using
 `https://apihub.copernicus.eu/apihub` and caches downloads under
 `data/raw/<SATELLITE>` based on location and time range.
 
+> **Note**
+> The download scripts require outbound HTTPS access to
+> `apihub.copernicus.eu`. Connection issues such as timeouts or
+> "No route to host" usually mean your network is restricted. Configure a
+> proxy if needed.
+
 ```bash
 export SENTINEL_USER=<your username>
 export SENTINEL_PASSWORD=<your password>
