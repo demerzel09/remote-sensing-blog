@@ -107,6 +107,9 @@ python scripts/download_sentinel.py \
 If the target folder already exists the previously downloaded data will be
 reused.
 
+See [docs/sentinelsat_setup.md](docs/sentinelsat_setup.md) for details on
+creating an account and setting these variables.
+
 ## Usage
 
 1. Run `cloudmask.py` to derive a boolean mask of clouds from the QA band.
