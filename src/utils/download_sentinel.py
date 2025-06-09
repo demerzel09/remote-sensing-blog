@@ -51,6 +51,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--end", help="End date YYYY-MM-DD or YYYYMMDD")
     parser.add_argument("--satellite", default="Sentinel-2", help="Platform name")
     parser.add_argument("--output", help="Output directory")
+    parser.add_argument(
+        "--sh-base-url",
+        help="Sentinel Hub service URL (default: env SH_BASE_URL or Copernicus)",
+    )
+    parser.add_argument(
+        "--sh-auth-base-url",
+        help="Sentinel Hub auth URL (default: env SH_AUTH_BASE_URL or Copernicus)",
+    )
     args = parser.parse_args()
     if args.config:
         with open(args.config) as f:
@@ -77,6 +85,8 @@ def download_sentinel(
     out_dir: str | Path | None = None,
     buffer: float = 0.005,
     resolution: int = 10,
+    sh_base_url: str | None = None,
+    sh_auth_base_url: str | None = None,
 ) -> Path:
     """Download selected bands using sentinelhub."""
     if out_dir is None:
@@ -100,12 +110,14 @@ def download_sentinel(
     config.sh_client_id = client_id
     config.sh_client_secret = client_secret
     # Use Copernicus Data Space unless overridden
-    config.sh_base_url = os.getenv(
-        "SH_BASE_URL", "https://sh.dataspace.copernicus.eu"
+    config.sh_base_url = (
+        sh_base_url
+        or os.getenv("SH_BASE_URL", "https://sh.dataspace.copernicus.eu")
     )
     # Authentication uses the identity service
-    config.sh_auth_base_url = os.getenv(
-        "SH_AUTH_BASE_URL", "https://identity.dataspace.copernicus.eu"
+    config.sh_auth_base_url = (
+        sh_auth_base_url
+        or os.getenv("SH_AUTH_BASE_URL", "https://identity.dataspace.copernicus.eu")
     )
 
     bbox = BBox(
@@ -158,7 +170,11 @@ def download_sentinel(
 
 
 def download_from_config(
-    config_path: str | Path, output_dir: str | Path | None = None
+    config_path: str | Path,
+    output_dir: str | Path | None = None,
+    *,
+    sh_base_url: str | None = None,
+    sh_auth_base_url: str | None = None,
 ) -> Path:
     with open(config_path) as f:
         cfg = yaml.safe_load(f)
@@ -169,13 +185,22 @@ def download_from_config(
         end=cfg["end"],
         satellite=cfg.get("satellite", "Sentinel-2"),
         out_dir=output_dir,
+        sh_base_url=sh_base_url,
+        sh_auth_base_url=sh_auth_base_url,
     )
 
 
 def main() -> None:
     args = parse_args()
     out_dir = download_sentinel(
-        args.lat, args.lon, args.start, args.end, args.satellite, args.output
+        args.lat,
+        args.lon,
+        args.start,
+        args.end,
+        args.satellite,
+        args.output,
+        sh_base_url=args.sh_base_url,
+        sh_auth_base_url=args.sh_auth_base_url,
     )
     if args.config:
         shutil.copy(args.config, Path(out_dir) / Path(args.config).name)
