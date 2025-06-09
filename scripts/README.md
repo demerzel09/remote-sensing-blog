@@ -29,6 +29,7 @@ Example usage:
 ```bash
 export SENTINELHUB_CLIENT_ID=<your client id>
 export SENTINELHUB_CLIENT_SECRET=<your client secret>
+export SH_BASE_URL=https://sh.dataspace.copernicus.eu
 python -m src.utils.download_sentinel --lat 35.6 --lon 139.7 --start 2024-01-01 --end 2024-01-31
 ```
 
