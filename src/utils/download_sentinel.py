@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import os
 import shutil
+import tarfile
 from pathlib import Path
 
 import yaml
@@ -22,6 +23,9 @@ from sentinelhub import (
 from oauthlib.oauth2.rfc6749.errors import InvalidClientError
 import sys
 
+SH_BASE_URL="https://sh.dataspace.copernicus.eu"
+SH_TOKEN_URL="https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
+
 
 def normalize_date(value: str) -> str:
     """Return date in YYYY-MM-DD format."""
@@ -36,7 +40,7 @@ def normalize_date(value: str) -> str:
 
 def build_output_dir(satellite: str, lat: float, lon: float, start: str, end: str) -> Path:
     """Construct output directory based on query parameters."""
-    base = Path("data/raw") / satellite
+    base = Path(satellite)
     loc = f"{lat:.4f}_{lon:.4f}"
     name = f"{loc}_{start}_{end}"
     out_dir = base / name
@@ -55,11 +59,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", help="Output directory")
     parser.add_argument(
         "--sh-base-url",
-        help="Sentinel Hub service URL (default: env SH_BASE_URL or Copernicus)",
+        default=SH_BASE_URL,
+        type=str,
+        help="Sentinel Hub service URL",
     )
     parser.add_argument(
-        "--sh-auth-base-url",
-        help="Sentinel Hub auth URL (default: env SH_AUTH_BASE_URL or Copernicus)",
+        "--sh-token-url",
+        default=SH_TOKEN_URL,
+        type=str,
+        help="Sentinel Hub auth URL",
     )
     args = parser.parse_args()
     if args.config:
@@ -75,8 +83,13 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
-BANDS = ["B02", "B03", "B04", "B08", "B11", "QA60"]
+#BANDS = ["B02", "B03", "B04", "B08", "B11", "QA60"] # Sentinel-2 L1C bands
+BANDS = ["B02", "B03", "B04", "B08", "B11", "SCL", "dataMask"] # Sentinel-2 L2A bands
 
+# QA60 is L1C cloud mask, not available in L2A
+# SCL is L2A scene classification
+# CLP is L2A cloud probability.but not available in L2A CDSE
+# dataMask is L2A data mask (valid pixels)
 
 def download_sentinel(
     lat: float,
@@ -88,18 +101,13 @@ def download_sentinel(
     buffer: float = 0.005,
     resolution: int = 10,
     sh_base_url: str | None = None,
-    sh_auth_base_url: str | None = None,
+    sh_token_url: str | None = None,
 ) -> Path:
     """Download selected bands using sentinelhub."""
-    if out_dir is None:
-        out_dir = build_output_dir(satellite, lat, lon, start, end)
-    else:
-        out_dir = Path(out_dir)
-        out_dir.mkdir(parents=True, exist_ok=True)
+    sub_dir = build_output_dir(satellite, lat, lon, start, end)
+    out_dir = Path(out_dir).joinpath(sub_dir) if out_dir else sub_dir
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-    if any(out_dir.iterdir()):
-        print(f"Using cached data in {out_dir}")
-        return out_dir
 
     client_id = os.getenv("SENTINELHUB_CLIENT_ID")
     client_secret = os.getenv("SENTINELHUB_CLIENT_SECRET")
@@ -112,77 +120,99 @@ def download_sentinel(
     config.sh_client_id = client_id
     config.sh_client_secret = client_secret
     # Use Copernicus Data Space unless overridden
-    config.sh_base_url = (
-        sh_base_url
-        or os.getenv("SH_BASE_URL", "https://sh.dataspace.copernicus.eu")
-    )
+    config.sh_base_url = sh_base_url
     # Authentication uses the identity service
-    config.sh_auth_base_url = (
-        sh_auth_base_url
-        or os.getenv("SH_AUTH_BASE_URL", "https://identity.dataspace.copernicus.eu")
+    config.sh_token_url  = sh_token_url
+    # CDSE 用コレクション (service_url=None)  ### changed ###
+    S2_CDSE = DataCollection.SENTINEL2_L2A.define_from(
+        name="SENTINEL2_L2A_CDSE",      # 任意の名前
+        service_url=None               # ← ここを None に
     )
 
     bbox = BBox(
         (lon - buffer, lat - buffer, lon + buffer, lat + buffer), crs=CRS.WGS84
     )
     catalog = SentinelHubCatalog(config=config)
+    print(config.sh_base_url)
+    print(S2_CDSE.service_url)
+
     try:
         search = catalog.search(
-            DataCollection.SENTINEL2_L2A,
+            S2_CDSE,
             bbox=bbox,
             time=(start, end),
             fields={"include": ["id"]},
         )
     except InvalidClientError:
-        print(
-            "Authentication failed. Check SENTINELHUB_CLIENT_ID/SENTINELHUB_CLIENT_SECRET and base URLs."
-        )
-        sys.exit(1)
+        raise RuntimeError("認証失敗: CLIENT_ID / SECRET / URL を確認してください")
+
     if not list(search):
-        print("No products found for given parameters")
-        return out_dir
+        sys.exit("⚠️  指定期間・範囲にシーンがありません")
+
+    # ------------------------------------------------------------
+    # 1 リクエストで 3 出力 (Bバンド5枚 + SCL + dataMask)          ### changed ###
+    # ------------------------------------------------------------
+    evalscript = """
+    //VERSION=3
+    function setup() {
+      return {
+        input: [{ bands: ["B02","B03","B04","B08","B11","SCL","dataMask"] }],
+        output: [
+          { id:"default", bands:5, sampleType:"FLOAT32" },
+          { id:"SCL",     bands:1, sampleType:"UINT8"  },
+          { id:"MASK",    bands:1, sampleType:"UINT8"  }
+        ]
+      }
+    }
+    function evaluatePixel(s) {
+      return {
+        default:[s.B02,s.B03,s.B04,s.B08,s.B11],
+        SCL:[s.SCL],
+        MASK:[s.dataMask]
+      };
+    }
+    """
+
+    responses = [
+        SentinelHubRequest.output_response("default", MimeType.TIFF),
+        SentinelHubRequest.output_response("SCL", MimeType.TIFF),
+        SentinelHubRequest.output_response("MASK", MimeType.TIFF),
+    ]
 
     size = bbox_to_dimensions(bbox, resolution=resolution)
 
-    for band in BANDS:
-        evalscript = f"""
-        //VERSION=3
-        function setup() {{
-            return {{
-                input: [{{bands: [\"{band}\"], units: \"DN\"}}],
-                output: {{bands: 1, sampleType: \"UINT16\"}}
-            }};
-        }}
-        function evaluatePixel(sample) {{
-            return [sample.{band}];
-        }}
-        """
-        request = SentinelHubRequest(
-            data_folder=str(out_dir),
-            evalscript=evalscript,
-            input_data=[
-                SentinelHubRequest.input_data(
-                    data_collection=DataCollection.SENTINEL2_L2A,
-                    time_interval=(start, end),
-                )
-            ],
-            responses=[SentinelHubRequest.output_response("default", MimeType.TIFF)],
-            bbox=bbox,
-            size=size,
-            config=config,
-        )
-        try:
-            request.get_data(save_data=True)
-        except InvalidClientError:
-            print(
-                "Authentication failed. Check SENTINELHUB_CLIENT_ID/SENTINELHUB_CLIENT_SECRET and base URLs."
-            )
-            sys.exit(1)
-        saved = Path(request.get_filename_list()[0])
-        (out_dir / f"{band}.tif").write_bytes(saved.read_bytes())
-        saved.unlink()
+    request = SentinelHubRequest(
+        data_folder=str(out_dir),
+        evalscript=evalscript,
+        input_data=[SentinelHubRequest.input_data(
+        	data_collection=S2_CDSE, time_interval=(start, end))],
+        responses=responses,
+        bbox=bbox,
+        size=size,
+        config=config,
+    )
 
-    print(f"Downloaded {len(BANDS)} band TIFFs to {out_dir}")
+    print("Downloading imagery …")
+    try:
+        request.get_data(save_data=True)
+    except InvalidClientError:
+        sys.exit("❌  認証に失敗しました")
+
+    # ---------- TAR を展開して 3 ファイル取り出し ----------------------  ☆ changed ☆
+    tar_path = Path(request.data_folder) / request.get_filename_list()[0]
+    if tar_path.suffix.lower() != ".tar":
+        sys.exit(f"❌  予期しないファイル形式: {tar_path.name}")
+
+    with tarfile.open(tar_path) as tar:
+        tar.extractall(path=out_dir)
+
+    # 展開されたファイル名は evalscript の id と同じ
+    (out_dir / "default.tif").rename(out_dir / "BANDS.tif")
+    (out_dir / "SCL.tif").rename(out_dir / "SCL.tif")
+    (out_dir / "MASK.tif").rename(out_dir / "MASK.tif")
+
+    tar_path.unlink()                     # TAR は不要なので削除
+    print(f"✅  Saved GeoTIFFs to {out_dir}")
     return out_dir
 
 
@@ -191,10 +221,9 @@ def download_from_config(
     output_dir: str | Path | None = None,
     *,
     sh_base_url: str | None = None,
-    sh_auth_base_url: str | None = None,
+    sh_token_url: str | None = None,
 ) -> Path:
-    with open(config_path) as f:
-        cfg = yaml.safe_load(f)
+    cfg = yaml.safe_load(Path(config_path).read_text())
     return download_sentinel(
         lat=cfg["lat"],
         lon=cfg["lon"],
@@ -203,7 +232,7 @@ def download_from_config(
         satellite=cfg.get("satellite", "Sentinel-2"),
         out_dir=output_dir,
         sh_base_url=sh_base_url,
-        sh_auth_base_url=sh_auth_base_url,
+        sh_token_url=sh_token_url,
     )
 
 
@@ -217,7 +246,7 @@ def main() -> None:
         args.satellite,
         args.output,
         sh_base_url=args.sh_base_url,
-        sh_auth_base_url=args.sh_auth_base_url,
+        sh_token_url=args.sh_token_url,
     )
     if args.config:
         shutil.copy(args.config, Path(out_dir) / Path(args.config).name)
