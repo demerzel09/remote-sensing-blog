@@ -123,11 +123,14 @@ python -m src.utils.download_sentinel \
   --lon 139.7 \
   --start 2024-01-01 \
   --end 2024-01-31 \
-  --buffer 0.005
+  --buffer 0.005 \
+  --split-bands
 ```
 
 The `--buffer` option (or a `buffer` field in `download.yaml`) sets how wide the
-bounding box around the coordinate should be.
+bounding box around the coordinate should be. Add `--split-bands` (or set
+`split_bands: true` in `download.yaml`) to store each band as its own TIFF
+instead of the default `BANDS.tif` stack.
 
 If the target folder already exists the previously downloaded data will be
 reused.
