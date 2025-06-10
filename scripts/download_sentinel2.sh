@@ -4,7 +4,8 @@ set -euo pipefail
 # Directory containing this script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Hard coded paths for a single example run
+# Hard coded paths for a single example run. The YAML now includes the list of
+# bands to download.
 OUTPUT_DIR="data/raw/example_run"
 CONFIG="configs/download.yaml"
 

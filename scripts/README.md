@@ -42,6 +42,11 @@ width of the downloaded area in degrees.
 Use `--sh-base-url` and `--sh-auth-base-url` to override the service and
 authentication endpoints instead of the environment variables.
 
+Pass the bands to download with `--bands` or a `bands:` array in the YAML
+configuration. Bands are specified by their short identifiers such as `B02`.
+When omitted, the default list (`B02`, `B03`, `B04`, `B08`, `B11`, `SCL`,
+`dataMask`) is used.
+
 ## `run_sentinel2_pipeline.sh`
 A helper script that runs the full Sentinel-2 workflow using the configuration
 files stored in `configs/`. Each pipeline step copies its YAML configuration
