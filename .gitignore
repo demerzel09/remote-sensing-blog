@@ -69,3 +69,5 @@ setenv_dataspace_copernicus_eu.sh:Zone.Identifier
 scripts/setenv_dataspace_copernicus_eu.sh
 scripts/setenv_dataspace_copernicus_eu.sh
 scripts/set_env_variables.sh
+src/utils/download_sentinel - コピー.py:Zone.Identifier
+src/utils/download_sentinel - コピー.py
