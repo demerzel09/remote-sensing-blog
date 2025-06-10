@@ -68,3 +68,4 @@ setenv_dataspace_copernicus_eu.sh
 setenv_dataspace_copernicus_eu.sh:Zone.Identifier
 scripts/setenv_dataspace_copernicus_eu.sh
 scripts/setenv_dataspace_copernicus_eu.sh
+scripts/set_env_variables.sh
