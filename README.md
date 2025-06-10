@@ -122,8 +122,12 @@ python -m src.utils.download_sentinel \
   --lat 35.6 \
   --lon 139.7 \
   --start 2024-01-01 \
-  --end 2024-01-31
+  --end 2024-01-31 \
+  --buffer 0.005
 ```
+
+The `--buffer` option (or a `buffer` field in `download.yaml`) sets how wide the
+bounding box around the coordinate should be.
 
 If the target folder already exists the previously downloaded data will be
 reused.

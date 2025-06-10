@@ -57,6 +57,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--end", help="End date YYYY-MM-DD or YYYYMMDD")
     parser.add_argument("--satellite", default="Sentinel-2", help="Platform name")
     parser.add_argument("--output", help="Output directory")
+    parser.add_argument("--buffer", type=float, default=0.005, help="BBox buffer in degrees")
     parser.add_argument(
         "--sh-base-url",
         default=SH_BASE_URL,
@@ -78,6 +79,7 @@ def parse_args() -> argparse.Namespace:
         args.start = cfg["start"]
         args.end = cfg["end"]
         args.satellite = cfg.get("satellite", args.satellite)
+        args.buffer = cfg.get("buffer", args.buffer)
     if None in {args.lat, args.lon, args.start, args.end}:
         parser.error("lat, lon, start and end must be provided")
     return args
@@ -230,6 +232,7 @@ def download_from_config(
         start=cfg["start"],
         end=cfg["end"],
         satellite=cfg.get("satellite", "Sentinel-2"),
+        buffer=cfg.get("buffer", 0.005),
         out_dir=output_dir,
         sh_base_url=sh_base_url,
         sh_token_url=sh_token_url,
@@ -245,6 +248,7 @@ def main() -> None:
         args.end,
         args.satellite,
         args.output,
+        buffer=args.buffer,
         sh_base_url=args.sh_base_url,
         sh_token_url=args.sh_token_url,
     )
