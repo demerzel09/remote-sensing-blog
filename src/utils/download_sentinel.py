@@ -173,7 +173,7 @@ def download_sentinel(
     if 'dataMask' in bands:
         outputs.append("      { id:\"MASK\",    bands:1, sampleType:\"UINT8\"  }")
     parts.append("    output: [")
-    parts.extend(outputs)
+    parts.append(",\n".join(outputs))
     parts.append("    ]")
     parts.append("  }")
     parts.append("}")
@@ -184,7 +184,7 @@ def download_sentinel(
     if 'dataMask' in bands:
         lines.append("      MASK:[s.dataMask]")
     parts.append("  return {")
-    parts.extend(lines)
+    parts.append(",\n".join(lines))
     parts.append("  };")
     parts.append("}")
     evalscript = "\n".join(parts)
