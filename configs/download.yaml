@@ -9,4 +9,6 @@ bands:
   - B04
   - B08
   - B11
+  - SCL
+  - dataMask
 buffer: 0.03
