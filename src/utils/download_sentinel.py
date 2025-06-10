@@ -214,19 +214,25 @@ def download_sentinel(
     except InvalidClientError:
         sys.exit("❌  認証に失敗しました")
 
-    # ---------- TAR を展開して 3 ファイル取り出し ----------------------  ☆ changed ☆
-    tar_path = Path(request.data_folder) / request.get_filename_list()[0]
-    if tar_path.suffix.lower() != ".tar":
-        sys.exit(f"❌  予期しないファイル形式: {tar_path.name}")
+    # ---------- Downloaded file handling -------------------------------------
+    # TAR archives contain multiple outputs (default, SCL, MASK).  If the
+    # request returns a single TIFF, move it directly to ``BANDS.tif``.
+    file_path = Path(request.data_folder) / request.get_filename_list()[0]
+    suffix = file_path.suffix.lower()
 
-    with tarfile.open(tar_path) as tar:
-        tar.extractall(path=out_dir)
+    if suffix == ".tar":
+        with tarfile.open(file_path) as tar:
+            tar.extractall(path=out_dir)
 
-    # Extracted file names correspond to evalscript output ids
-    (out_dir / "default.tif").rename(out_dir / "BANDS.tif")
-    # Additional outputs already use their id names
+        # Extracted file names correspond to evalscript output ids
+        (out_dir / "default.tif").rename(out_dir / "BANDS.tif")
+        # Additional outputs already use their id names
 
-    tar_path.unlink()                     # TAR は不要なので削除
+        file_path.unlink()                # TAR は不要なので削除
+    elif suffix in {".tif", ".tiff"}:
+        shutil.move(str(file_path), out_dir / "BANDS.tif")
+    else:
+        sys.exit(f"❌  予期しないファイル形式: {file_path.name}")
     print(f"✅  Saved GeoTIFFs to {out_dir}")
     return out_dir
 
