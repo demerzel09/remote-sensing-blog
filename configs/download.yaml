@@ -9,3 +9,4 @@ bands:
   - B04
   - B08
   - B11
+buffer: 0.005
