@@ -19,6 +19,8 @@ from sentinelhub import (
     CRS,
     bbox_to_dimensions,
 )
+from oauthlib.oauth2.rfc6749.errors import InvalidClientError
+import sys
 
 
 def normalize_date(value: str) -> str:
@@ -124,9 +126,18 @@ def download_sentinel(
         (lon - buffer, lat - buffer, lon + buffer, lat + buffer), crs=CRS.WGS84
     )
     catalog = SentinelHubCatalog(config=config)
-    search = catalog.search(
-        DataCollection.SENTINEL2_L2A, bbox=bbox, time=(start, end), fields={"include": ["id"]}
-    )
+    try:
+        search = catalog.search(
+            DataCollection.SENTINEL2_L2A,
+            bbox=bbox,
+            time=(start, end),
+            fields={"include": ["id"]},
+        )
+    except InvalidClientError:
+        print(
+            "Authentication failed. Check SENTINELHUB_CLIENT_ID/SENTINELHUB_CLIENT_SECRET and base URLs."
+        )
+        sys.exit(1)
     if not list(search):
         print("No products found for given parameters")
         return out_dir
@@ -160,7 +171,13 @@ def download_sentinel(
             size=size,
             config=config,
         )
-        request.get_data(save_data=True)
+        try:
+            request.get_data(save_data=True)
+        except InvalidClientError:
+            print(
+                "Authentication failed. Check SENTINELHUB_CLIENT_ID/SENTINELHUB_CLIENT_SECRET and base URLs."
+            )
+            sys.exit(1)
         saved = Path(request.get_filename_list()[0])
         (out_dir / f"{band}.tif").write_bytes(saved.read_bytes())
         saved.unlink()
