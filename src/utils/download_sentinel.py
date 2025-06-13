@@ -8,6 +8,8 @@ import shutil
 import tarfile
 from pathlib import Path
 
+import rasterio
+
 import yaml
 from datetime import datetime
 from sentinelhub import (
@@ -27,7 +29,7 @@ SH_BASE_URL="https://sh.dataspace.copernicus.eu"
 SH_TOKEN_URL="https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 
 #BANDS = ["B02", "B03", "B04", "B08", "B11", "QA60"] # Sentinel-2 L1C bands
-DEFALUT_BANDS = ["B02", "B03", "B04", "B08", "B11", "SCL", "dataMask"] # Sentinel-2 L2A bands
+DEFAULT_BANDS = ["B02", "B03", "B04", "B08", "B11", "SCL", "dataMask"] # Sentinel-2 L2A bands
 
 # QA60 is L1C cloud mask, not available in L2A
 # SCL is L2A scene classification
@@ -54,6 +56,20 @@ def build_output_dir(satellite: str, lat: float, lon: float, start: str, end: st
     out_dir = base / name
     out_dir.mkdir(parents=True, exist_ok=True)
     return out_dir
+
+
+def split_band_stack(stack_path: Path, bands: list[str]) -> None:
+    """Split a multi-band GeoTIFF into separate single-band files."""
+    with rasterio.open(stack_path) as src:
+        meta = src.meta.copy()
+        if src.count < len(bands):
+            raise ValueError("Band stack has fewer layers than expected")
+        for i, name in enumerate(bands, 1):
+            meta.update(count=1)
+            out = stack_path.parent / f"{name}.tif"
+            with rasterio.open(out, "w", **meta) as dst:
+                dst.write(src.read(i), 1)
+    stack_path.unlink()
 
 
 def parse_args() -> argparse.Namespace:
@@ -98,7 +114,7 @@ def parse_args() -> argparse.Namespace:
     if None in {args.lat, args.lon, args.start, args.end}:
         parser.error("lat, lon, start and end must be provided")
     if args.bands is None:
-        args.bands = DEFALUT_BANDS
+        args.bands = DEFAULT_BANDS
     return args
 
 
@@ -118,7 +134,7 @@ def download_sentinel(
 ) -> Path:
     """Download selected bands using sentinelhub."""
     if bands is None:
-        bands = DEFALUT_BANDS
+        bands = DEFAULT_BANDS
     sub_dir = build_output_dir(satellite, lat, lon, start, end)
     out_dir = Path(out_dir).joinpath(sub_dir) if out_dir else sub_dir
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -254,6 +270,10 @@ def download_sentinel(
         shutil.move(str(file_path), out_dir / dest)
     else:
         sys.exit(f"❌  予期しないファイル形式: {file_path.name}")
+
+    if split_bands and (out_dir / "BANDS.tif").exists():
+        spectral = [b for b in bands if b not in {"SCL", "dataMask"}]
+        split_band_stack(out_dir / "BANDS.tif", spectral)
     print(f"✅  Saved GeoTIFFs to {out_dir}")
     return out_dir
 
@@ -276,7 +296,7 @@ def download_from_config(
         out_dir=output_dir,
         sh_base_url=sh_base_url,
         sh_token_url=sh_token_url,
-        bands=cfg.get("bands", DEFALUT_BANDS),
+        bands=cfg.get("bands", DEFAULT_BANDS),
         split_bands=cfg.get("split_bands", False),
     )
 
