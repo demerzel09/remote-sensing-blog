@@ -25,8 +25,29 @@ def main() -> None:
     input_dir = Path(args.input_dir)
     output_dir = Path(args.output_dir)
 
-    bands = [input_dir / Path(p).name for p in cfg["bands"]]
-    qa_path = input_dir / Path(cfg["qa"]).name
+    dl_cfg_path = input_dir / "download.yaml"
+    if dl_cfg_path.exists():
+        with open(dl_cfg_path) as f:
+            dl_cfg = yaml.safe_load(f)
+
+        if not dl_cfg.get("split_bands", False):
+            raise ValueError(
+                "split_bands must be true when preprocessing downloaded data"
+            )
+
+        spectral = [b for b in dl_cfg.get("bands", []) if b not in {"SCL", "dataMask"}]
+        bands = [input_dir / f"{b}.tif" for b in spectral]
+        if "SCL" in dl_cfg.get("bands", []):
+            qa_name = "SCL.tif"
+        elif "dataMask" in dl_cfg.get("bands", []):
+            qa_name = "MASK.tif"
+        else:
+            qa_name = Path(cfg["qa"]).name
+
+        qa_path = input_dir / qa_name
+    else:
+        bands = [input_dir / Path(p).name for p in cfg["bands"]]
+        qa_path = input_dir / Path(cfg["qa"]).name
 
     mask = cloud_mask(qa_path)
     stack, meta = stack_bands(bands, mask)
@@ -39,6 +60,8 @@ def main() -> None:
         json.dump(meta, f)
 
     shutil.copy(args.config, out_path.parent / Path(args.config).name)
+    if dl_cfg_path.exists():
+        shutil.copy(dl_cfg_path, out_path.parent / dl_cfg_path.name)
 
 
 if __name__ == "__main__":
