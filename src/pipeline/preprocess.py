@@ -38,18 +38,19 @@ def main() -> None:
         spectral = [b for b in dl_cfg.get("bands", []) if b not in {"SCL", "dataMask"}]
         bands = [input_dir / f"{b}.tif" for b in spectral]
         if "SCL" in dl_cfg.get("bands", []):
-            qa_name = "SCL.tif"
-        elif "dataMask" in dl_cfg.get("bands", []):
-            qa_name = "MASK.tif"
+            scl_path = input_dir / "SCL.tif"
         else:
-            qa_name = Path(cfg["qa"]).name
-
-        qa_path = input_dir / qa_name
+            scl_path = input_dir / Path(cfg["scl"]).name
+        if "dataMask" in dl_cfg.get("bands", []):
+            mask_path = input_dir / "MASK.tif"
+        else:
+            mask_path = input_dir / Path(cfg.get("mask", "")).name if cfg.get("mask") else None
     else:
         bands = [input_dir / Path(p).name for p in cfg["bands"]]
-        qa_path = input_dir / Path(cfg["qa"]).name
+        scl_path = input_dir / Path(cfg["scl"]).name
+        mask_path = input_dir / Path(cfg.get("mask", "")).name if cfg.get("mask") else None
 
-    mask = cloud_mask(qa_path)
+    mask = cloud_mask(scl_path, mask_path)
     stack, meta = stack_bands(bands, mask)
     features = compute_features(stack, red_idx=2, nir_idx=3, swir_idx=4)
 

@@ -33,6 +33,7 @@ DEFALUT_BANDS = ["B02", "B03", "B04", "B08", "B11", "SCL", "dataMask"] # Sentine
 # SCL is L2A scene classification
 # CLP is L2A cloud probability.but not available in L2A CDSE
 # dataMask is L2A data mask (valid pixels)
+# This repository derives cloud masks from the SCL and dataMask bands.
 
 def normalize_date(value: str) -> str:
     """Return date in YYYY-MM-DD format."""

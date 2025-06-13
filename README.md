@@ -4,9 +4,9 @@ This project is licensed under the MIT License.
 
 ## 日本語の説明
 
-このプロジェクトはリモートセンシングデータを用いた簡単な分類ワークフローを示します。必要なデータは複数バンドのGeoTIFFと雲判定用のQAバンド、学習用ラベルです。
+このプロジェクトはリモートセンシングデータを用いた簡単な分類ワークフローを示します。必要なデータは複数バンドのGeoTIFFとSCL・dataMaskバンド、学習用ラベルです。
 
-1. `cloudmask.py` でQAバンドから雲マスクを作成します。
+1. `cloudmask.py` でSCL/dataMaskから雲マスクを作成します。
 2. `stack_bands.py` でマスクを適用したバンドスタックを作成します。
 3. `features.py` でNDVI・NDWIを計算します。
 4. `train_model.py` でRandomForest分類器を学習させます。
@@ -30,7 +30,7 @@ written by the pipeline can be kept under `data/processed/`.
 ## Sentinel-2 を用いた土地利用分類
 
 `data/raw/` フォルダに以下の Sentinel-2 バンド (`B02`, `B03`, `B04`, `B08`, `B11`) と
-QA バンド(`QA60`)、学習用ラベル(`labels.tif`) を配置します。
+シーン分類(`SCL`)・データマスク(`MASK`) バンド、学習用ラベル(`labels.tif`) を配置します。
 
 ```bash
 data/raw/
@@ -39,7 +39,8 @@ data/raw/
 ├── B04.tif
 ├── B08.tif
 ├── B11.tif
-├── QA60.tif
+├── SCL.tif
+├── MASK.tif
 └── labels.tif
 ```
 
@@ -50,7 +51,8 @@ data/raw/
 ```bash
 python -m src.classification.pipeline \
   --bands data/raw/B02.tif data/raw/B03.tif data/raw/B04.tif data/raw/B08.tif data/raw/B11.tif \
-  --qa data/raw/QA60.tif \
+  --scl data/raw/SCL.tif \
+  --mask data/raw/MASK.tif \
   --labels data/raw/labels.tif \
   --output outputs/prediction.tif
 ```
@@ -98,7 +100,7 @@ NumPy arrays only.
 ## Data requirements
 
 - Sentinel/Landsat like bands saved as individual GeoTIFF files
-- A QA band from which clouds can be detected
+- ``SCL`` and optional ``dataMask`` bands to detect clouds
 - A raster of training labels for model fitting
 
 ### Automated Sentinel‑2 download
@@ -141,7 +143,7 @@ creating an account and setting these variables.
 
 ## Usage
 
-1. Run `cloudmask.py` to derive a boolean mask of clouds from the QA band.
+1. Run `cloudmask.py` to derive a boolean mask of clouds from the SCL/dataMask bands.
 2. Use `stack_bands.py` to create a cloud-masked stack of bands.
 3. Compute NDVI and NDWI features with `features.py`.
 4. Train a RandomForest model using `train_model.py` and your label raster.
