@@ -12,6 +12,20 @@ from ..preprocess.stack_bands import stack_bands
 from ..preprocess.features import compute_features
 
 
+def split_band_stack(stack_path: Path, bands: list[str]) -> None:
+    """Split a multi-band GeoTIFF into separate single-band files."""
+    with rasterio.open(stack_path) as src:
+        meta = src.meta.copy()
+        if src.count < len(bands):
+            raise ValueError("Band stack has fewer layers than expected")
+        for i, name in enumerate(bands, 1):
+            meta.update(count=1)
+            out = stack_path.parent / f"{name}.tif"
+            with rasterio.open(out, "w", **meta) as dst:
+                dst.write(src.read(i), 1)
+    stack_path.unlink()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Preprocess Sentinel bands")
     parser.add_argument("--config", required=True, help="YAML config file")
@@ -30,12 +44,17 @@ def main() -> None:
         with open(dl_cfg_path) as f:
             dl_cfg = yaml.safe_load(f)
 
-        if not dl_cfg.get("split_bands", False):
-            raise ValueError(
-                "split_bands must be true when preprocessing downloaded data"
-            )
-
         spectral = [b for b in dl_cfg.get("bands", []) if b not in {"SCL", "dataMask"}]
+        if not dl_cfg.get("split_bands", False):
+            stack = input_dir / "BANDS.tif"
+            if stack.exists():
+                split_band_stack(stack, spectral)
+                dl_cfg["split_bands"] = True
+            else:
+                raise ValueError(
+                    "split_bands must be true when preprocessing downloaded data"
+                )
+
         bands = [input_dir / f"{b}.tif" for b in spectral]
         if "SCL" in dl_cfg.get("bands", []):
             scl_path = input_dir / "SCL.tif"
