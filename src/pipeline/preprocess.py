@@ -28,6 +28,20 @@ def split_band_stack(stack_path: Path, bands: list[str]) -> None:
     stack_path.unlink()
 
 
+def split_band_stack(stack_path: Path, bands: list[str]) -> None:
+    """Split a multi-band GeoTIFF into separate single-band files."""
+    with rasterio.open(stack_path) as src:
+        meta = src.meta.copy()
+        if src.count < len(bands):
+            raise ValueError("Band stack has fewer layers than expected")
+        for i, name in enumerate(bands, 1):
+            meta.update(count=1)
+            out = stack_path.parent / f"{name}.tif"
+            with rasterio.open(out, "w", **meta) as dst:
+                dst.write(src.read(i), 1)
+    stack_path.unlink()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Preprocess Sentinel bands")
     parser.add_argument("--config", required=True, help="YAML config file")
@@ -78,8 +92,13 @@ def main() -> None:
     out_path = output_dir / Path(cfg.get("features_out", "features.npz")).name
     out_path.parent.mkdir(parents=True, exist_ok=True)
     np.savez(out_path, features=features)
+
+    meta_json = meta.copy()
+    if "crs" in meta_json and hasattr(meta_json["crs"], "to_string"):
+        meta_json["crs"] = meta_json["crs"].to_string()
+
     with open(out_path.with_suffix(".meta.json"), "w") as f:
-        json.dump(meta, f)
+        json.dump(meta_json, f)
 
     shutil.copy(args.config, out_path.parent / Path(args.config).name)
     if dl_cfg_path.exists():
