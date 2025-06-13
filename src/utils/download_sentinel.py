@@ -27,7 +27,7 @@ SH_BASE_URL="https://sh.dataspace.copernicus.eu"
 SH_TOKEN_URL="https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 
 #BANDS = ["B02", "B03", "B04", "B08", "B11", "QA60"] # Sentinel-2 L1C bands
-DEFALUT_BANDS = ["B02", "B03", "B04", "B08", "B11", "SCL", "dataMask"] # Sentinel-2 L2A bands
+DEFAULT_BANDS = ["B02", "B03", "B04", "B08", "B11", "SCL", "dataMask"] # Sentinel-2 L2A bands
 
 # QA60 is L1C cloud mask, not available in L2A
 # SCL is L2A scene classification
@@ -98,7 +98,7 @@ def parse_args() -> argparse.Namespace:
     if None in {args.lat, args.lon, args.start, args.end}:
         parser.error("lat, lon, start and end must be provided")
     if args.bands is None:
-        args.bands = DEFALUT_BANDS
+        args.bands = DEFAULT_BANDS
     return args
 
 
@@ -118,7 +118,7 @@ def download_sentinel(
 ) -> Path:
     """Download selected bands using sentinelhub."""
     if bands is None:
-        bands = DEFALUT_BANDS
+        bands = DEFAULT_BANDS
     sub_dir = build_output_dir(satellite, lat, lon, start, end)
     out_dir = Path(out_dir).joinpath(sub_dir) if out_dir else sub_dir
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -276,7 +276,7 @@ def download_from_config(
         out_dir=output_dir,
         sh_base_url=sh_base_url,
         sh_token_url=sh_token_url,
-        bands=cfg.get("bands", DEFALUT_BANDS),
+        bands=cfg.get("bands", DEFAULT_BANDS),
         split_bands=cfg.get("split_bands", False),
     )
 
