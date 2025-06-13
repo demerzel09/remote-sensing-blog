@@ -11,6 +11,8 @@ from ..preprocess.cloudmask import cloud_mask
 from ..preprocess.stack_bands import stack_bands
 from ..preprocess.features import compute_features
 
+# 雲をマスクして cloud_mask()
+# NDVI and NDWI 特徴を抽出する compute_features()
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Preprocess Sentinel bands")
