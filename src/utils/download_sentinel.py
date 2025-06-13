@@ -8,6 +8,8 @@ import shutil
 import tarfile
 from pathlib import Path
 
+import rasterio
+
 import yaml
 from datetime import datetime
 from sentinelhub import (
@@ -54,6 +56,20 @@ def build_output_dir(satellite: str, lat: float, lon: float, start: str, end: st
     out_dir = base / name
     out_dir.mkdir(parents=True, exist_ok=True)
     return out_dir
+
+
+def split_band_stack(stack_path: Path, bands: list[str]) -> None:
+    """Split a multi-band GeoTIFF into separate single-band files."""
+    with rasterio.open(stack_path) as src:
+        meta = src.meta.copy()
+        if src.count < len(bands):
+            raise ValueError("Band stack has fewer layers than expected")
+        for i, name in enumerate(bands, 1):
+            meta.update(count=1)
+            out = stack_path.parent / f"{name}.tif"
+            with rasterio.open(out, "w", **meta) as dst:
+                dst.write(src.read(i), 1)
+    stack_path.unlink()
 
 
 def parse_args() -> argparse.Namespace:
@@ -254,6 +270,10 @@ def download_sentinel(
         shutil.move(str(file_path), out_dir / dest)
     else:
         sys.exit(f"❌  予期しないファイル形式: {file_path.name}")
+
+    if split_bands and (out_dir / "BANDS.tif").exists():
+        spectral = [b for b in bands if b not in {"SCL", "dataMask"}]
+        split_band_stack(out_dir / "BANDS.tif", spectral)
     print(f"✅  Saved GeoTIFFs to {out_dir}")
     return out_dir
 
