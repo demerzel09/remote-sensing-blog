@@ -11,8 +11,6 @@ application to obtain a client ID and secret.
 ```bash
 export SENTINELHUB_CLIENT_ID=<your client id>
 export SENTINELHUB_CLIENT_SECRET=<your client secret>
-export SH_BASE_URL=https://sh.dataspace.copernicus.eu
-export SH_TOKEN_URL=https://identity.dataspace.copernicus.eu
 ```
 
 Alternatively provide `--sh-base-url` and `--sh-token-url` when running
