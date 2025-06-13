@@ -39,8 +39,6 @@ def split_band_stack(stack_path: Path, bands: list[str]) -> None:
             out = stack_path.parent / f"{name}.tif"
             with rasterio.open(out, "w", **meta) as dst:
                 dst.write(src.read(i), 1)
-    stack_path.unlink()
-
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Preprocess Sentinel bands")
