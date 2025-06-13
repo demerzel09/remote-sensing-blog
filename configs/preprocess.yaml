@@ -4,5 +4,6 @@ bands:
   - data/raw/B04.tif
   - data/raw/B08.tif
   - data/raw/B11.tif
-qa: data/raw/QA60.tif
+scl: data/raw/SCL.tif
+mask: data/raw/MASK.tif
 features_out: data/processed/features.npz
