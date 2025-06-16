@@ -44,14 +44,18 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Preprocess Sentinel bands")
     parser.add_argument("--config", required=True, help="YAML config file")
     parser.add_argument("--input-dir", required=True, help="Directory with raw bands")
-    parser.add_argument("--output-dir", required=True, help="Directory for features")
+    parser.add_argument("--output-dir", help="Directory for features")
     args = parser.parse_args()
 
     with open(args.config) as f:
         cfg = yaml.safe_load(f)
 
     input_dir = Path(args.input_dir)
-    output_dir = Path(args.output_dir)
+    if args.output_dir:
+        output_dir = Path(args.output_dir)
+    else:
+        output_dir = input_dir / "preprocess"
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     dl_cfg_path = input_dir / "download.yaml"
     if dl_cfg_path.exists():
