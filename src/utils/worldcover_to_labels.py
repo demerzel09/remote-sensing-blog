@@ -9,6 +9,9 @@ import rasterio
 from rasterio.warp import reproject, Resampling
 import numpy as np
 from urllib.request import urlretrieve
+import tempfile
+import zipfile
+import shutil
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Clip WorldCover to target raster")
@@ -21,8 +24,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--output", required=True, help="Output labels.tif path")
     p.add_argument(
         "--url",
-        default="https://esa-worldcover.s3.amazonaws.com/v100/2021/map/ESA_WorldCover_10m_2021_v100_Map.tif",
-        help="Source URL for WorldCover when downloading",
+        default="https://esa-worldcover.s3.amazonaws.com/v100/2021/map/ESA_WorldCover_10m_2021_v100_Map.zip",
+        help="ZIP URL for WorldCover when downloading",
     )
 
     return p.parse_args()
@@ -33,9 +36,27 @@ def main() -> None:
 
     wc_path = Path(args.worldcover)
     if not wc_path.exists():
-        print(f"Downloading WorldCover data to {wc_path}")
+        print(f"Downloading WorldCover data from {args.url}")
         wc_path.parent.mkdir(parents=True, exist_ok=True)
-        urlretrieve(args.url, wc_path)
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                zip_path = Path(tmpdir) / Path(args.url).name
+                urlretrieve(args.url, zip_path)
+                with zipfile.ZipFile(zip_path) as zf:
+                    tif_member = None
+                    for name in zf.namelist():
+                        if name.lower().endswith('.tif'):
+                            tif_member = name
+                            break
+                    if tif_member is None:
+                        raise RuntimeError('TIFF not found in ZIP archive')
+                    zf.extract(tif_member, path=tmpdir)
+                    shutil.move(Path(tmpdir) / tif_member, wc_path)
+        except Exception as e:
+            raise RuntimeError(
+                'Failed to download or extract WorldCover dataset. '
+                'Verify the URL or supply --url.'
+            ) from e
     args.worldcover = str(wc_path)
 
     with rasterio.open(args.reference) as ref:

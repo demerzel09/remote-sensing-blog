@@ -5,7 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 
-# Example paths. WORLD_COVER will be downloaded if it does not already exist.
+# Example paths. The WorldCover ZIP will be downloaded and extracted if missing.
 
 WORLD_COVER="data/worldcover/ESA_WorldCover_10m_2021_v100_Map.tif"
 REFERENCE="data/raw/B02.tif"
