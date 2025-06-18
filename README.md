@@ -61,18 +61,8 @@ bash scripts/worldcover_to_labels.sh
 ```
 
 `worldcover_to_labels.sh` は `src/utils/worldcover_to_labels.py` を呼び出し、
-WorldCover タイルが見つからなければダウンロードしてから
-=======
-以下は 2021 年版タイルをダウンロードし、Sentinel-2 バンドと同じ範囲に切り出して
-`labels.tif` を作成する例です。
 
-```bash
-wget -P data/worldcover \
-  https://esa-worldcover.s3.amazonaws.com/v100/2021/map/ESA_WorldCover_10m_2021_v100_Map.tif
-bash scripts/worldcover_to_labels.sh
-```
-
-`worldcover_to_labels.sh` は `src/utils/worldcover_to_labels.py` を呼び出して
+WorldCover タイルが見つからなければ ZIP をダウンロードして展開し
 `data/raw/B02.tif` と同じ範囲・解像度にリサンプリングした `data/raw/labels.tif`
 を生成します。
 
