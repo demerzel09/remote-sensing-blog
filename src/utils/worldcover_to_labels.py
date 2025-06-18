@@ -9,6 +9,8 @@ import rasterio
 from rasterio.warp import reproject, Resampling
 import numpy as np
 from urllib.request import urlretrieve
+from urllib.error import HTTPError
+import sys
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Clip WorldCover to target raster")
@@ -35,7 +37,13 @@ def main() -> None:
     if not wc_path.exists():
         print(f"Downloading WorldCover data to {wc_path}")
         wc_path.parent.mkdir(parents=True, exist_ok=True)
-        urlretrieve(args.url, wc_path)
+        try:
+            urlretrieve(args.url, wc_path)
+        except HTTPError as e:
+            print(
+                f"Failed to download WorldCover. Check URL or network: {args.url}"
+            )
+            sys.exit(1)
     args.worldcover = str(wc_path)
 
     with rasterio.open(args.reference) as ref:
