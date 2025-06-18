@@ -9,6 +9,10 @@ import rasterio
 from rasterio.warp import reproject, Resampling
 import numpy as np
 from urllib.request import urlretrieve
+
+from urllib.error import HTTPError
+import sys
+
 import tempfile
 import zipfile
 import shutil
@@ -39,6 +43,13 @@ def main() -> None:
         print(f"Downloading WorldCover data from {args.url}")
         wc_path.parent.mkdir(parents=True, exist_ok=True)
         try:
+            urlretrieve(args.url, wc_path)
+        except HTTPError as e:
+            print(
+                f"Failed to download WorldCover. Check URL or network: {args.url}"
+            )
+            sys.exit(1)
+
             with tempfile.TemporaryDirectory() as tmpdir:
                 zip_path = Path(tmpdir) / Path(args.url).name
                 urlretrieve(args.url, zip_path)
@@ -57,6 +68,7 @@ def main() -> None:
                 'Failed to download or extract WorldCover dataset. '
                 'Verify the URL or supply --url.'
             ) from e
+
     args.worldcover = str(wc_path)
 
     with rasterio.open(args.reference) as ref:
