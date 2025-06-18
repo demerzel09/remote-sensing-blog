@@ -64,7 +64,6 @@ bash scripts/run_sentinel2_pipeline.sh
 ## `worldcover_to_labels.sh`
 Crops an ESA WorldCover tile to the area covered by the example
 Sentinel‑2 scene. The script invokes `src/utils/worldcover_to_labels.py`, which
-downloads a ZIP archive of the WorldCover data if it is missing, extracts it,
-and then produces
+downloads the required WorldCover tiles on demand and then produces
 
 `data/raw/labels.tif` matching the resolution of the reference band.
