@@ -61,7 +61,8 @@ bash scripts/worldcover_to_labels.sh
 ```
 
 `worldcover_to_labels.sh` は `src/utils/worldcover_to_labels.py` を呼び出し、
-WorldCover タイルが見つからなければ ZIP アーカイブを自動ダウンロードして展開し、
+
+WorldCover タイルが見つからなければ ZIP をダウンロードして展開し
 `data/raw/B02.tif` と同じ範囲・解像度にリサンプリングした `data/raw/labels.tif`
 を生成します。
 
