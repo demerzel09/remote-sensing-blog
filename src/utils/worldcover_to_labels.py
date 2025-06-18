@@ -19,6 +19,9 @@ from urllib.error import HTTPError
 import sys
 
 import math
+import tempfile
+import zipfile
+import shutil
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Clip WorldCover to target raster")
@@ -77,8 +80,26 @@ def main() -> None:
             try:
                 urlretrieve(url, path)
             except HTTPError:
-                print(f"Failed to download WorldCover tile: {url}")
-                sys.exit(1)
+                print(f"Failed to download {url}, trying ZIP")
+                try:
+                    with tempfile.TemporaryDirectory() as tmpdir:
+                        zip_url = url + ".zip"
+                        zip_path = Path(tmpdir) / Path(zip_url).name
+                        urlretrieve(zip_url, zip_path)
+                        with zipfile.ZipFile(zip_path) as zf:
+                            tif_member = None
+                            for name in zf.namelist():
+                                if name.lower().endswith(".tif"):
+                                    tif_member = name
+                                    break
+                            if tif_member is None:
+                                raise RuntimeError("TIFF not found in ZIP archive")
+                            zf.extract(tif_member, path=tmpdir)
+                            shutil.move(Path(tmpdir) / tif_member, path)
+                except Exception as e:
+                    raise RuntimeError(
+                        f"Failed to download or extract WorldCover tile {tile}"
+                    ) from e
         tile_paths.append(path)
 
     with rasterio.open(args.reference) as ref:
