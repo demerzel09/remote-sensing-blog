@@ -53,6 +53,16 @@ data/raw/
 #### WorldCover からラベルを作成する
 
 ESA の **WorldCover** データセットを利用すると簡易的な土地利用ラベルを取得できます。
+以下は このデータセットをダウンロードしていない場合は自動取得し、
+Sentinel-2 バンドと同じ範囲に切り出して `labels.tif` を作成する例です。
+
+```bash
+bash scripts/worldcover_to_labels.sh
+```
+
+`worldcover_to_labels.sh` は `src/utils/worldcover_to_labels.py` を呼び出し、
+WorldCover タイルが見つからなければダウンロードしてから
+=======
 以下は 2021 年版タイルをダウンロードし、Sentinel-2 バンドと同じ範囲に切り出して
 `labels.tif` を作成する例です。
 

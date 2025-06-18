@@ -4,7 +4,9 @@ set -euo pipefail
 # Directory containing this script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Example paths. WORLD_COVER should point to the downloaded WorldCover TIFF.
+
+# Example paths. WORLD_COVER will be downloaded if it does not already exist.
+
 WORLD_COVER="data/worldcover/ESA_WorldCover_10m_2021_v100_Map.tif"
 REFERENCE="data/raw/B02.tif"
 OUTPUT="data/raw/labels.tif"
