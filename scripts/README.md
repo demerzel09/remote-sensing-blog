@@ -60,3 +60,8 @@ results.
 ```bash
 bash scripts/run_sentinel2_pipeline.sh
 ```
+
+## `worldcover_to_labels.sh`
+Crops a downloaded ESA WorldCover tile to the area covered by the example
+Sentinel‑2 scene. The script calls `src/utils/worldcover_to_labels.py` to create
+`data/raw/labels.tif` matching the resolution of the reference band.
