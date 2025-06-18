@@ -1,4 +1,6 @@
-features: data/processed/features.npz
+# Only the file name is used by the training script; the directory is provided
+# separately via the `--input-dir` option.
+features: features.npz
 labels: data/raw/labels.tif
 model_out: outputs/model.pkl
 n_estimators: 100

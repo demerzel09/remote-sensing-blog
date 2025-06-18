@@ -6,4 +6,6 @@ bands:
   - data/raw/B11.tif
 scl: data/raw/SCL.tif
 mask: data/raw/MASK.tif
-features_out: data/processed/features.npz
+# Only the base name of this path is used; the file is written under the
+# `preprocess` directory of the input data.
+features_out: features.npz
