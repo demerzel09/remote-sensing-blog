@@ -48,6 +48,23 @@ data/raw/
 
 モデルの学習には入力画像と同じ範囲・解像度を持つラベルラスタ `labels.tif` が必要です。
 このファイルはリポジトリには含まれていません。ユーザー自身で作成するか外部ソースから入手してください。
+外部ソースから入手する場合は次の「WorldCover からラベルを作成する」を参照してください。
+
+#### WorldCover からラベルを作成する
+
+ESA の **WorldCover** データセットを利用すると簡易的な土地利用ラベルを取得できます。
+以下は 2021 年版タイルをダウンロードし、Sentinel-2 バンドと同じ範囲に切り出して
+`labels.tif` を作成する例です。
+
+```bash
+wget -P data/worldcover \
+  https://esa-worldcover.s3.amazonaws.com/v100/2021/map/ESA_WorldCover_10m_2021_v100_Map.tif
+bash scripts/worldcover_to_labels.sh
+```
+
+`worldcover_to_labels.sh` は `src/utils/worldcover_to_labels.py` を呼び出して
+`data/raw/B02.tif` と同じ範囲・解像度にリサンプリングした `data/raw/labels.tif`
+を生成します。
 
 ### 3. Sentinel-2 土地利用分類の実行と表示
 
