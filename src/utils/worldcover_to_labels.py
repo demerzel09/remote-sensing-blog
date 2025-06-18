@@ -10,7 +10,6 @@ from rasterio.warp import reproject, Resampling
 import numpy as np
 from urllib.request import urlretrieve
 
-
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Clip WorldCover to target raster")
     p.add_argument(
@@ -25,6 +24,7 @@ def parse_args() -> argparse.Namespace:
         default="https://esa-worldcover.s3.amazonaws.com/v100/2021/map/ESA_WorldCover_10m_2021_v100_Map.tif",
         help="Source URL for WorldCover when downloading",
     )
+
     return p.parse_args()
 
 
