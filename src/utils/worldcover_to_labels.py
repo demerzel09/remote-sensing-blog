@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-"""Create label raster by clipping ESA WorldCover to match Sentinel-2 imagery."""
+"""Create label raster by clipping ESA WorldCover to match Sentinel-2 imagery.
+
+If the target TIFF is absent the script downloads a ZIP archive containing the
+WorldCover raster and extracts it before processing.
+"""
 from __future__ import annotations
 
 import argparse
@@ -15,7 +19,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--worldcover",
         default="data/worldcover/ESA_WorldCover_10m_2021_v100_Map.tif",
-        help="Path to WorldCover TIFF (will be downloaded if missing)",
+        help="Path to WorldCover TIFF (ZIP is downloaded if missing)",
     )
     p.add_argument("--reference", required=True, help="Raster to match (e.g. B02)")
     p.add_argument("--output", required=True, help="Output labels.tif path")

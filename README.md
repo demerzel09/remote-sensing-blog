@@ -61,7 +61,7 @@ bash scripts/worldcover_to_labels.sh
 ```
 
 `worldcover_to_labels.sh` は `src/utils/worldcover_to_labels.py` を呼び出し、
-WorldCover タイルが見つからなければダウンロードしてから
+WorldCover タイルが見つからなければ ZIP をダウンロードして展開し
 =======
 以下は 2021 年版タイルをダウンロードし、Sentinel-2 バンドと同じ範囲に切り出して
 `labels.tif` を作成する例です。
