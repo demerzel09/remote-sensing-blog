@@ -1,3 +1,4 @@
-features: data/processed/features.npz
+# The features file is expected inside the directory passed to `--features-dir`.
+features: features.npz
 model: outputs/model.pkl
 output: outputs/prediction.tif
