@@ -5,7 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Hard coded paths for a single example run
-INPUT_DIR="data/processed/example_run"
+INPUT_DIR="data/example_run/Sentinel-2/35.6000_139.7000_2024-01-01_2024-01-31"
 OUTPUT_DIR="outputs/model_example"
 CONFIG="configs/train.yaml"
 
