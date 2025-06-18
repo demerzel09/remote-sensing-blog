@@ -44,7 +44,12 @@ data/raw/
 └── labels.tif
 ```
 
-### 3. ランドサット・土地利用分類の実行と表示
+### 学習用ラベル `labels.tif`
+
+モデルの学習には入力画像と同じ範囲・解像度を持つラベルラスタ `labels.tif` が必要です。
+このファイルはリポジトリには含まれていません。ユーザー自身で作成するか外部ソースから入手してください。
+
+### 3. Sentinel-2 土地利用分類の実行と表示
 
 まず以下のコマンドで分類を実行してラスタを生成します。
 
@@ -174,6 +179,9 @@ bash scripts/preprocess_sentinel2.sh
 bash scripts/train_model.sh
 bash scripts/predict_sentinel2.sh
 ```
+`preprocess_sentinel2.sh` が出力する `features.npz` はダウンロードディレクトリ内の
+`preprocess/` サブフォルダに保存されます。`train_model.sh` はこの場所から特徴量を読み込みます。
+
 
 
 ## Running the pipeline
