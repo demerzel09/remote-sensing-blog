@@ -13,21 +13,6 @@ from ..preprocess.features import compute_features
 
 # 雲をマスクして cloud_mask()
 # NDVI and NDWI 特徴を抽出する compute_features()
-
-def split_band_stack(stack_path: Path, bands: list[str]) -> None:
-    """Split a multi-band GeoTIFF into separate single-band files."""
-    with rasterio.open(stack_path) as src:
-        meta = src.meta.copy()
-        if src.count < len(bands):
-            raise ValueError("Band stack has fewer layers than expected")
-        for i, name in enumerate(bands, 1):
-            meta.update(count=1)
-            out = stack_path.parent / f"{name}.tif"
-            with rasterio.open(out, "w", **meta) as dst:
-                dst.write(src.read(i), 1)
-    stack_path.unlink()
-
-
 def split_band_stack(stack_path: Path, bands: list[str]) -> None:
     """Split a multi-band GeoTIFF into separate single-band files."""
     with rasterio.open(stack_path) as src:
