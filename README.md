@@ -61,10 +61,9 @@ bash scripts/worldcover_to_labels.sh
 ```
 
 `worldcover_to_labels.sh` は `src/utils/worldcover_to_labels.py` を呼び出し、
-
-WorldCover タイルが見つからなければ ZIP をダウンロードして展開し
-`data/raw/B02.tif` と同じ範囲・解像度にリサンプリングした `data/raw/labels.tif`
-を生成します。
+必要な WorldCover タイルが存在しなければ自動的にダウンロードして
+`data/raw/B02.tif` と同じ範囲・解像度にリサンプリングした
+`data/raw/labels.tif` を生成します。
 
 ### 3. Sentinel-2 土地利用分類の実行と表示
 
