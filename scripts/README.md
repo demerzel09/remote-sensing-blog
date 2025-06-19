@@ -62,8 +62,7 @@ bash scripts/run_sentinel2_pipeline.sh
 ```
 
 ## `worldcover_to_labels.sh`
-Crops an ESA WorldCover tile to the area covered by the example
-Sentinel‑2 scene. The script invokes `src/utils/worldcover_to_labels.py`, which
-downloads the required WorldCover tiles on demand and then produces
-
-`data/raw/labels.tif` matching the resolution of the reference band.
+Downloads ESA WorldCover tiles using `src/utils/download_worldcover_datasets.py`.
+The default parameters fetch 2021 tiles covering the Kyushu region of Japan
+(`--bbox 30 129 34 132 --version v200/2021/map/`) and store them under
+`data/wc2021_kyusyu_bbox`.

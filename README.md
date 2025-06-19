@@ -50,20 +50,17 @@ data/raw/
 このファイルはリポジトリには含まれていません。ユーザー自身で作成するか外部ソースから入手してください。
 外部ソースから入手する場合は次の「WorldCover からラベルを作成する」を参照してください。
 
-#### WorldCover からラベルを作成する
+#### WorldCover タイルをダウンロードする
 
-ESA の **WorldCover** データセットを利用すると簡易的な土地利用ラベルを取得できます。
-以下は このデータセットをダウンロードしていない場合は自動取得し、
-Sentinel-2 バンドと同じ範囲に切り出して `labels.tif` を作成する例です。
+ESA の **WorldCover** データセットの一部を取得する例として、
+`scripts/worldcover_to_labels.sh` は `src/utils/download_worldcover_datasets.py` を
+呼び出します。デフォルトでは九州周辺をカバーする緯度経度範囲
+`30 129 34 132` を指定し、2021 年版 (`v200/2021/map/`) のタイルを
+`data/wc2021_kyusyu_bbox` 以下に保存します。
 
 ```bash
 bash scripts/worldcover_to_labels.sh
 ```
-
-`worldcover_to_labels.sh` は `src/utils/worldcover_to_labels.py` を呼び出し、
-必要な WorldCover タイルが存在しなければ自動的にダウンロードして
-`data/raw/B02.tif` と同じ範囲・解像度にリサンプリングした
-`data/raw/labels.tif` を生成します。
 
 #### WorldCover タイルだけを取得する
 
