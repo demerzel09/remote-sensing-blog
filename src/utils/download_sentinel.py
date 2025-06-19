@@ -10,6 +10,7 @@ from pathlib import Path
 
 import yaml
 import rasterio
+import numpy as np
 from datetime import datetime
 from sentinelhub import (
     SHConfig,
@@ -80,6 +81,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", help="Output directory")
     parser.add_argument("--buffer", type=float, default=0.005, help="BBox buffer in degrees")
     parser.add_argument("--max-cloud", type=float, default=None, help="Maximum cloud cover percentage")
+    parser.add_argument("--min-valid", type=float, default=None, help="Minimum percent of valid pixels")
     parser.add_argument(
         "--sh-base-url",
         default=SH_BASE_URL,
@@ -103,6 +105,7 @@ def parse_args() -> argparse.Namespace:
         args.satellite = cfg.get("satellite", args.satellite)
         args.buffer = cfg.get("buffer", args.buffer)
         args.max_cloud = cfg.get("max_cloud", args.max_cloud)
+        args.min_valid = cfg.get("min_valid", args.min_valid)
     if None in {args.lat, args.lon, args.start, args.end}:
         parser.error("lat, lon, start and end must be provided")
     if args.bands is None:
@@ -123,6 +126,7 @@ def download_sentinel(
     sh_token_url: str | None = None,
     bands: list[str] | None = None,
     max_cloud: float | None = None,
+    min_valid: float | None = None,
 ) -> Path:
     """Download selected bands using sentinelhub."""
     if bands is None:
@@ -262,6 +266,17 @@ def download_sentinel(
         else:
             sys.exit(f"❌  予期しないファイル形式: {file_path.name}")
 
+        if min_valid is not None and "dataMask" in bands:
+            mask_file = date_dir / "MASK.tif"
+            if mask_file.exists():
+                with rasterio.open(mask_file) as src:
+                    dm = src.read(1)
+                valid_pct = np.count_nonzero(dm) / dm.size * 100
+                if valid_pct < min_valid:
+                    print(f"Skipping {dt_str}: {valid_pct:.1f}% valid pixels")
+                    shutil.rmtree(date_dir)
+                    continue
+
         split_band_stack(date_dir / "BANDS.tif", spectral)
         results.append(date_dir)
 
@@ -289,6 +304,7 @@ def download_from_config(
         sh_token_url=sh_token_url,
         bands=cfg.get("bands", DEFAULT_BANDS),
         max_cloud=cfg.get("max_cloud"),
+        min_valid=cfg.get("min_valid"),
     )
 
 
@@ -306,6 +322,7 @@ def main() -> None:
         sh_token_url=args.sh_token_url,
         bands=args.bands,
         max_cloud=args.max_cloud,
+        min_valid=args.min_valid,
     )
     if args.config:
         shutil.copy(args.config, Path(out_dir) / Path(args.config).name)
