@@ -186,6 +186,8 @@ multi-band `BANDS.tif` file and also split into individual band TIFFs.
 
 Use `--max-cloud` or `max_cloud:` in `download.yaml` to limit the catalog search
 to scenes with less than the specified cloud cover percentage.
+Use `--min-valid` or `min_valid:` in `download.yaml` to skip scenes where less
+than that percentage of pixels are marked valid by the `dataMask` band.
 
 If the target folder already exists the previously downloaded data will be
 reused.
