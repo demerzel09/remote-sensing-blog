@@ -159,16 +159,16 @@ def download_sentinel(
     print(config.sh_base_url)
     print(S2_CDSE.service_url)
 
-    query = None
+    cloud_filter = None
     if max_cloud is not None:
-        query = {"eo:cloud_cover": {"lte": max_cloud}}
+        cloud_filter = f"eo:cloud_cover <= {max_cloud}"
 
     try:
         search = catalog.search(
             S2_CDSE,
             bbox=bbox,
             time=(start, end),
-            query=query,
+            filter=cloud_filter,
             fields={"include": ["id", "properties.datetime", "properties.eo:cloud_cover"]},
         )
     except InvalidClientError:
