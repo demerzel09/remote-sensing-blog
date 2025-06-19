@@ -62,6 +62,18 @@ ESA の **WorldCover** データセットの一部を取得する例として、
 bash scripts/worldcover_to_labels.sh
 ```
 
+WorldCover タイルから `labels.tif` を切り出すには
+`src.utils.worldcover_to_label` を利用します。`--worldcover` にタイルを保存した
+ディレクトリ、`--sentinel-dir` に `download.yaml` を含む Sentinel‑2 のダウンロード
+フォルダを指定してください。
+
+```bash
+python -m src.utils.worldcover_to_label \
+  --worldcover data/wc2021_kyusyu_bbox \
+  --sentinel-dir data/example_run/Sentinel-2/35.6000_139.7000_2024-01-01_2024-01-31 \
+  --output data/example_run/Sentinel-2/35.6000_139.7000_2024-01-01_2024-01-31/labels.tif
+```
+
 #### WorldCover タイルだけを取得する
 
 特定地域の WorldCover タイルをまとめてダウンロードしたい場合は

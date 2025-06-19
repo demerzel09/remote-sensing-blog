@@ -66,3 +66,14 @@ Downloads ESA WorldCover tiles using `src/utils/download_worldcover_datasets.py`
 The default parameters fetch 2021 tiles covering the Kyushu region of Japan
 (`--bbox 30 129 34 132 --version v200/2021/map/`) and store them under
 `data/wc2021_kyusyu_bbox`.
+
+## `worldcover_to_label.py`
+Cropping the downloaded tiles to match a Sentinel‑2 scene can be done with the
+`src.utils.worldcover_to_label` command. Provide the tile directory and the
+Sentinel download folder containing `download.yaml`:
+
+```bash
+python -m src.utils.worldcover_to_label \
+  --worldcover data/wc2021_kyusyu_bbox \
+  --sentinel-dir data/example_run/Sentinel-2/35.6000_139.7000_2024-01-01_2024-01-31
+```
