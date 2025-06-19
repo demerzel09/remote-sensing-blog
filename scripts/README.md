@@ -54,6 +54,11 @@ configuration. Bands are specified by their short identifiers such as `B02`.
 When omitted, the default list (`B02`, `B03`, `B04`, `B08`, `B11`, `SCL`,
 `dataMask`) is used.
 
+Set `--zip-output` or `zip_output: true` in `download.yaml` to compress the
+download folder after all scenes are retrieved. Use
+`src/utils/mosaic_scenes.py` on the extracted archive to merge the dated
+subfolders back into single-band images.
+
 ## `run_sentinel2_pipeline.sh`
 A helper script that runs the full Sentinel-2 workflow using the configuration
 files stored in `configs/`. Each pipeline step copies its YAML configuration
