@@ -48,15 +48,13 @@ def main() -> None:
             dl_cfg = yaml.safe_load(f)
 
         spectral = [b for b in dl_cfg.get("bands", []) if b not in {"SCL", "dataMask"}]
-        if not dl_cfg.get("split_bands", False):
-            stack = input_dir / "BANDS.tif"
-            if stack.exists():
+        stack = input_dir / "BANDS.tif"
+        if stack.exists():
+            missing = [b for b in spectral if not (input_dir / f"{b}.tif").exists()]
+            if missing:
                 split_band_stack(stack, spectral)
-                dl_cfg["split_bands"] = True
-            else:
-                raise ValueError(
-                    "split_bands must be true when preprocessing downloaded data"
-                )
+        else:
+            raise ValueError("BANDS.tif not found in input directory")
 
         bands = [input_dir / f"{b}.tif" for b in spectral]
         if "SCL" in dl_cfg.get("bands", []):

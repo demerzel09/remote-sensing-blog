@@ -12,4 +12,3 @@ bands:
   - SCL
   - dataMask
 buffer: 0.03
-split_bands: true

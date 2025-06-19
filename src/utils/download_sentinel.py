@@ -9,6 +9,7 @@ import tarfile
 from pathlib import Path
 
 import yaml
+import rasterio
 from datetime import datetime
 from sentinelhub import (
     SHConfig,
@@ -34,6 +35,18 @@ DEFAULT_BANDS = ["B02", "B03", "B04", "B08", "B11", "SCL", "dataMask"] # Sentine
 # CLP is L2A cloud probability.but not available in L2A CDSE
 # dataMask is L2A data mask (valid pixels)
 # This repository derives cloud masks from the SCL and dataMask bands.
+
+def split_band_stack(stack_path: Path, bands: list[str]) -> None:
+    """Split a multi-band GeoTIFF into separate single-band files."""
+    with rasterio.open(stack_path) as src:
+        meta = src.meta.copy()
+        if src.count < len(bands):
+            raise ValueError("Band stack has fewer layers than expected")
+        for i, name in enumerate(bands, 1):
+            meta.update(count=1)
+            out = stack_path.parent / f"{name}.tif"
+            with rasterio.open(out, "w", **meta) as dst:
+                dst.write(src.read(i), 1)
 
 def normalize_date(value: str) -> str:
     """Return date in YYYY-MM-DD format."""
@@ -67,11 +80,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", help="Output directory")
     parser.add_argument("--buffer", type=float, default=0.005, help="BBox buffer in degrees")
     parser.add_argument(
-        "--split-bands",
-        action="store_true",
-        help="Save each band as a separate TIFF instead of a multi-band stack",
-    )
-    parser.add_argument(
         "--sh-base-url",
         default=SH_BASE_URL,
         type=str,
@@ -93,7 +101,6 @@ def parse_args() -> argparse.Namespace:
         args.end = cfg["end"]
         args.satellite = cfg.get("satellite", args.satellite)
         args.buffer = cfg.get("buffer", args.buffer)
-        args.split_bands = cfg.get("split_bands", args.split_bands)
     if None in {args.lat, args.lon, args.start, args.end}:
         parser.error("lat, lon, start and end must be provided")
     if args.bands is None:
@@ -113,7 +120,6 @@ def download_sentinel(
     sh_base_url: str | None = None,
     sh_token_url: str | None = None,
     bands: list[str] | None = None,
-    split_bands: bool = False,
 ) -> Path:
     """Download selected bands using sentinelhub."""
     if bands is None:
@@ -172,13 +178,9 @@ def download_sentinel(
     input_list = ",".join(f'\"{b}\"' for b in bands)
     parts.append(f"    input: [{{ bands: [{input_list}] }}],")
     outputs = []
-    if split_bands:
-        for b in spectral:
-            outputs.append(f"      {{ id:\"{b}\", bands:1, sampleType:\"FLOAT32\" }}")
-    else:
-        outputs.append(
-            f"      {{ id:\"default\", bands:{len(spectral)}, sampleType:\"FLOAT32\" }}"
-        )
+    outputs.append(
+        f"      {{ id:\"default\", bands:{len(spectral)}, sampleType:\"FLOAT32\" }}"
+    )
     if 'SCL' in bands:
         outputs.append("      { id:\"SCL\",     bands:1, sampleType:\"UINT8\"  }")
     if 'dataMask' in bands:
@@ -190,10 +192,7 @@ def download_sentinel(
     parts.append("}")
     parts.append("function evaluatePixel(s) {")
     lines = []
-    if split_bands:
-        lines.extend([f"      {b}:[s.{b}]" for b in spectral])
-    else:
-        lines.append(f"      default:[{','.join(f's.{b}' for b in spectral)}]")
+    lines.append(f"      default:[{','.join(f's.{b}' for b in spectral)}]")
     if 'SCL' in bands:
         lines.append("      SCL:[s.SCL]")
     if 'dataMask' in bands:
@@ -204,10 +203,7 @@ def download_sentinel(
     parts.append("}")
     evalscript = "\n".join(parts)
 
-    if split_bands:
-        responses = [SentinelHubRequest.output_response(b, MimeType.TIFF) for b in spectral]
-    else:
-        responses = [SentinelHubRequest.output_response("default", MimeType.TIFF)]
+    responses = [SentinelHubRequest.output_response("default", MimeType.TIFF)]
     if "SCL" in bands:
         responses.append(SentinelHubRequest.output_response("SCL", MimeType.TIFF))
     if "dataMask" in bands:
@@ -243,16 +239,16 @@ def download_sentinel(
             tar.extractall(path=out_dir)
 
         # Extracted file names correspond to evalscript output ids
-        if not split_bands:
-            (out_dir / "default.tif").rename(out_dir / "BANDS.tif")
-        # Additional outputs already use their id names
+        (out_dir / "default.tif").rename(out_dir / "BANDS.tif")
 
         file_path.unlink()                # TAR は不要なので削除
     elif suffix in {".tif", ".tiff"}:
-        dest = file_path.name if split_bands else "BANDS.tif"
-        shutil.move(str(file_path), out_dir / dest)
+        shutil.move(str(file_path), out_dir / "BANDS.tif")
     else:
         sys.exit(f"❌  予期しないファイル形式: {file_path.name}")
+
+    # Split the stacked bands for convenience
+    split_band_stack(out_dir / "BANDS.tif", spectral)
 
     print(f"✅  Saved GeoTIFFs to {out_dir}")
     return out_dir
@@ -277,7 +273,6 @@ def download_from_config(
         sh_base_url=sh_base_url,
         sh_token_url=sh_token_url,
         bands=cfg.get("bands", DEFAULT_BANDS),
-        split_bands=cfg.get("split_bands", False),
     )
 
 
@@ -294,7 +289,6 @@ def main() -> None:
         sh_base_url=args.sh_base_url,
         sh_token_url=args.sh_token_url,
         bands=args.bands,
-        split_bands=args.split_bands,
     )
     if args.config:
         shutil.copy(args.config, Path(out_dir) / Path(args.config).name)
