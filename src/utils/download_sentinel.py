@@ -82,6 +82,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--buffer", type=float, default=0.005, help="BBox buffer in degrees")
     parser.add_argument("--max-cloud", type=float, default=None, help="Maximum cloud cover percentage")
     parser.add_argument("--min-valid", type=float, default=None, help="Minimum percent of valid pixels")
+    parser.add_argument("--zip-output", action="store_true", help="Create ZIP archive of output directory")
     parser.add_argument(
         "--sh-base-url",
         default=SH_BASE_URL,
@@ -106,6 +107,7 @@ def parse_args() -> argparse.Namespace:
         args.buffer = cfg.get("buffer", args.buffer)
         args.max_cloud = cfg.get("max_cloud", args.max_cloud)
         args.min_valid = cfg.get("min_valid", args.min_valid)
+        args.zip_output = cfg.get("zip_output", args.zip_output)
     if None in {args.lat, args.lon, args.start, args.end}:
         parser.error("lat, lon, start and end must be provided")
     if args.bands is None:
@@ -127,6 +129,7 @@ def download_sentinel(
     bands: list[str] | None = None,
     max_cloud: float | None = None,
     min_valid: float | None = None,
+    zip_output: bool = False,
 ) -> Path:
     """Download selected bands using sentinelhub."""
     if bands is None:
@@ -281,6 +284,9 @@ def download_sentinel(
         results.append(date_dir)
 
     print(f"✅  Saved GeoTIFFs to {out_dir}")
+    if zip_output:
+        archive = shutil.make_archive(str(out_dir), "zip", root_dir=out_dir)
+        print(f"Archived to {archive}")
     return out_dir
 
 
@@ -289,7 +295,7 @@ def download_from_config(
     output_dir: str | Path | None = None,
     *,
     sh_base_url: str | None = None,
-    sh_token_url: str | None = None,
+        sh_token_url: str | None = None,
 ) -> Path:
     cfg = yaml.safe_load(Path(config_path).read_text())
     return download_sentinel(
@@ -305,6 +311,7 @@ def download_from_config(
         bands=cfg.get("bands", DEFAULT_BANDS),
         max_cloud=cfg.get("max_cloud"),
         min_valid=cfg.get("min_valid"),
+        zip_output=cfg.get("zip_output", False),
     )
 
 
@@ -323,6 +330,7 @@ def main() -> None:
         bands=args.bands,
         max_cloud=args.max_cloud,
         min_valid=args.min_valid,
+        zip_output=args.zip_output,
     )
     if args.config:
         shutil.copy(args.config, Path(out_dir) / Path(args.config).name)

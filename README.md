@@ -192,6 +192,18 @@ than that percentage of pixels are marked valid by the `dataMask` band.
 If the target folder already exists the previously downloaded data will be
 reused.
 
+Pass `--zip-output` or set `zip_output: true` in `download.yaml` to compress the
+download directory on the server into a single ZIP archive. After downloading
+and extracting the archive you can combine the dated subfolders into mosaicked
+bands using `src/utils/mosaic_scenes.py`:
+
+```bash
+python -m src.utils.mosaic_scenes --input-dir path/to/unzipped_folder
+```
+
+The script writes each band mosaic back to the same folder without changing the
+file names so subsequent steps continue to work.
+
 See [docs/sentinelhub_setup.md](docs/sentinelhub_setup.md) for details on
 creating an account and setting these variables.
 
