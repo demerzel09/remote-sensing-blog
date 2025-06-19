@@ -23,6 +23,8 @@ location and date range. For instance the example scripts store files in
 the original `download.yaml` which the preprocessing step reads back to locate
 the bands. Requests are sent to `https://sh.dataspace.copernicus.eu`. If the
 directory already exists the cached files will be reused.
+Specify `max_cloud` in the YAML (or `--max-cloud` via CLI) to only download
+scenes below that cloud cover percentage.
 
 > **Note**
 > Network access to `sh.dataspace.copernicus.eu` is required. Configure a proxy

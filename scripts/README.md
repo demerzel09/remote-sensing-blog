@@ -38,10 +38,13 @@ export SH_TOKEN_URL=https://identity.dataspace.copernicus.eu
 python -m src.utils.download_sentinel \
   --lat 35.6 --lon 139.7 --start 2024-01-01 --end 2024-01-31 \
   --buffer 0.005
+  --max-cloud 20
 ```
 
 Specify `--buffer` or add a `buffer` field in a YAML config to control the
 width of the downloaded area in degrees.
+Use `--max-cloud` or `max_cloud:` in the YAML to filter scenes by cloud
+percentage.
 
 Use `--sh-base-url` and `--sh-token-url` to override the service and
 authentication endpoints instead of the environment variables.

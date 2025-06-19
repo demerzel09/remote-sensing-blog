@@ -176,12 +176,16 @@ python -m src.utils.download_sentinel \
   --lon 139.7 \
   --start 2024-01-01 \
   --end 2024-01-31 \
-  --buffer 0.005 
+  --buffer 0.005
+  --max-cloud 20
 ```
 
 The `--buffer` option (or a `buffer` field in `download.yaml`) sets how wide the
 bounding box around the coordinate should be. Downloaded images are saved as a
 multi-band `BANDS.tif` file and also split into individual band TIFFs.
+
+Use `--max-cloud` or `max_cloud:` in `download.yaml` to limit the catalog search
+to scenes with less than the specified cloud cover percentage.
 
 If the target folder already exists the previously downloaded data will be
 reused.
