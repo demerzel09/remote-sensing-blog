@@ -79,6 +79,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--bands", nargs="+", help="Bands to request")
     parser.add_argument("--output", help="Output directory")
     parser.add_argument("--buffer", type=float, default=0.005, help="BBox buffer in degrees")
+    parser.add_argument("--max-cloud", type=float, default=None, help="Maximum cloud cover percentage")
     parser.add_argument(
         "--sh-base-url",
         default=SH_BASE_URL,
@@ -101,6 +102,7 @@ def parse_args() -> argparse.Namespace:
         args.end = cfg["end"]
         args.satellite = cfg.get("satellite", args.satellite)
         args.buffer = cfg.get("buffer", args.buffer)
+        args.max_cloud = cfg.get("max_cloud", args.max_cloud)
     if None in {args.lat, args.lon, args.start, args.end}:
         parser.error("lat, lon, start and end must be provided")
     if args.bands is None:
@@ -120,6 +122,7 @@ def download_sentinel(
     sh_base_url: str | None = None,
     sh_token_url: str | None = None,
     bands: list[str] | None = None,
+    max_cloud: float | None = None,
 ) -> Path:
     """Download selected bands using sentinelhub."""
     if bands is None:
@@ -156,17 +159,23 @@ def download_sentinel(
     print(config.sh_base_url)
     print(S2_CDSE.service_url)
 
+    query = None
+    if max_cloud is not None:
+        query = {"eo:cloud_cover": {"lte": max_cloud}}
+
     try:
         search = catalog.search(
             S2_CDSE,
             bbox=bbox,
             time=(start, end),
-            fields={"include": ["id"]},
+            query=query,
+            fields={"include": ["id", "properties.datetime", "properties.eo:cloud_cover"]},
         )
     except InvalidClientError:
         raise RuntimeError("認証失敗: CLIENT_ID / SECRET / URL を確認してください")
 
-    if not list(search):
+    items = list(search)
+    if not items:
         sys.exit("⚠️  指定期間・範囲にシーンがありません")
 
     # Build evalscript dynamically based on selected bands
@@ -211,44 +220,50 @@ def download_sentinel(
 
     size = bbox_to_dimensions(bbox, resolution=resolution)
 
-    request = SentinelHubRequest(
-        data_folder=str(out_dir),
-        evalscript=evalscript,
-        input_data=[SentinelHubRequest.input_data(
-        	data_collection=S2_CDSE, time_interval=(start, end))],
-        responses=responses,
-        bbox=bbox,
-        size=size,
-        config=config,
-    )
+    results = []
+    for item in items:
+        dt_str = item["properties"]["datetime"]
+        dt = datetime.fromisoformat(dt_str.replace("Z", ""))
+        date_dir = out_dir / dt.strftime("%Y-%m-%dT%H%M%S")
+        date_dir.mkdir(parents=True, exist_ok=True)
 
-    print("Downloading imagery …")
-    try:
-        request.get_data(save_data=True)
-    except InvalidClientError:
-        sys.exit("❌  認証に失敗しました")
+        request = SentinelHubRequest(
+            data_folder=str(date_dir),
+            evalscript=evalscript,
+            input_data=[SentinelHubRequest.input_data(
+                data_collection=S2_CDSE,
+                time_interval=(dt_str, dt_str),
+            )],
+            responses=responses,
+            bbox=bbox,
+            size=size,
+            config=config,
+        )
 
-    # ---------- Downloaded file handling -------------------------------------
-    # TAR archives contain multiple outputs (default, SCL, MASK).  If the
-    # request returns a single TIFF, move it directly to ``BANDS.tif``.
-    file_path = Path(request.data_folder) / request.get_filename_list()[0]
-    suffix = file_path.suffix.lower()
+        print(f"Downloading imagery for {dt_str} …")
+        try:
+            request.get_data(save_data=True)
+        except InvalidClientError:
+            sys.exit("❌  認証に失敗しました")
 
-    if suffix == ".tar":
-        with tarfile.open(file_path) as tar:
-            tar.extractall(path=out_dir)
+        # ----- Downloaded file handling -----
+        file_path = Path(request.data_folder) / request.get_filename_list()[0]
+        suffix = file_path.suffix.lower()
 
-        # Extracted file names correspond to evalscript output ids
-        (out_dir / "default.tif").rename(out_dir / "BANDS.tif")
+        if suffix == ".tar":
+            with tarfile.open(file_path) as tar:
+                tar.extractall(path=date_dir)
 
-        file_path.unlink()                # TAR は不要なので削除
-    elif suffix in {".tif", ".tiff"}:
-        shutil.move(str(file_path), out_dir / "BANDS.tif")
-    else:
-        sys.exit(f"❌  予期しないファイル形式: {file_path.name}")
+            (date_dir / "default.tif").rename(date_dir / "BANDS.tif")
 
-    # Split the stacked bands for convenience
-    split_band_stack(out_dir / "BANDS.tif", spectral)
+            file_path.unlink()
+        elif suffix in {".tif", ".tiff"}:
+            shutil.move(str(file_path), date_dir / "BANDS.tif")
+        else:
+            sys.exit(f"❌  予期しないファイル形式: {file_path.name}")
+
+        split_band_stack(date_dir / "BANDS.tif", spectral)
+        results.append(date_dir)
 
     print(f"✅  Saved GeoTIFFs to {out_dir}")
     return out_dir
@@ -273,6 +288,7 @@ def download_from_config(
         sh_base_url=sh_base_url,
         sh_token_url=sh_token_url,
         bands=cfg.get("bands", DEFAULT_BANDS),
+        max_cloud=cfg.get("max_cloud"),
     )
 
 
@@ -289,6 +305,7 @@ def main() -> None:
         sh_base_url=args.sh_base_url,
         sh_token_url=args.sh_token_url,
         bands=args.bands,
+        max_cloud=args.max_cloud,
     )
     if args.config:
         shutil.copy(args.config, Path(out_dir) / Path(args.config).name)
