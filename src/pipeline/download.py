@@ -1,7 +1,12 @@
 import argparse
 from pathlib import Path
 import shutil
-from ..utils.download_sentinel import download_from_config, SH_BASE_URL, SH_TOKEN_URL
+from ..utils.download_sentinel import (
+    download_from_config,
+    SH_BASE_URL,
+    SH_TOKEN_URL,
+)
+from ..utils.mosaic import mosaic_sentinel_directory
 
 
 def main() -> None:
@@ -29,6 +34,9 @@ def main() -> None:
         sh_token_url=args.sh_token_url,
     )
     shutil.copy(args.config, Path(out_dir) / Path(args.config).name)
+
+    # Mosaic all downloaded scenes into a single stack
+    mosaic_sentinel_directory(Path(out_dir))
 
 
 if __name__ == "__main__":
