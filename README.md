@@ -65,6 +65,26 @@ bash scripts/worldcover_to_labels.sh
 `data/raw/B02.tif` と同じ範囲・解像度にリサンプリングした
 `data/raw/labels.tif` を生成します。
 
+#### WorldCover タイルだけを取得する
+
+特定地域の WorldCover タイルをまとめてダウンロードしたい場合は
+`src/utils/download_worldcover_datasets.py` を使用します。国名を指定する
+`--country` オプション、または緯度経度で範囲を与える `--bbox` オプション
+のいずれかを指定してください。
+
+```bash
+# 国単位で取得
+python -m src.utils.download_worldcover_datasets \
+    --country Japan --output data/worldcover
+
+# 緯度経度範囲を指定
+python -m src.utils.download_worldcover_datasets \
+    --bbox 34 135 36 138 --output data/worldcover
+```
+
+バージョンは `--version` で `v100/2020/map/` または `v200/2021/map/` を選択
+できます（デフォルトは `v100/2020/map/`）。
+
 ### 3. Sentinel-2 土地利用分類の実行と表示
 
 まず以下のコマンドで分類を実行してラスタを生成します。
