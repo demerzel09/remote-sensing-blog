@@ -72,3 +72,4 @@ src/utils/download_sentinel - コピー.py:Zone.Identifier
 src/utils/download_sentinel - コピー.py
 configs/download - コピー.yaml
 configs/download - コピー.yaml:Zone.Identifier
+scripts/preprocess_sentinel2 - コピー.sh:Zone.Identifier
