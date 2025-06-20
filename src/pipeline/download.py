@@ -33,7 +33,9 @@ def main() -> None:
         sh_base_url=args.sh_base_url,
         sh_token_url=args.sh_token_url,
     )
-    shutil.copy(args.config, Path(out_dir) / Path(args.config).name)
+    # Later pipeline stages expect the config file to be named
+    # ``download.yaml`` inside the download directory.
+    shutil.copy(args.config, Path(out_dir) / "download.yaml")
 
 
 if __name__ == "__main__":

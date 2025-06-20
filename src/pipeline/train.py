@@ -13,20 +13,31 @@ from ..classification.train_model import train_model
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train classification model")
     parser.add_argument("--config", required=True, help="YAML config file")
-    parser.add_argument("--input-dir", required=True, help="Directory with feature file")
     parser.add_argument("--output-dir", required=True, help="Directory for model")
     args = parser.parse_args()
 
     with open(args.config) as f:
         cfg = yaml.safe_load(f)
 
-    input_dir = Path(args.input_dir)
     output_dir = Path(args.output_dir)
 
-    features_path = input_dir / Path(cfg["features"]).name
-    data = np.load(features_path)["features"]
+    input_dirs = [Path(d) for d in cfg.get("input_dirs", [])]
+
+    feature_arrays = []
     with rasterio.open(cfg["labels"]) as src:
         labels = src.read(1)
+    labels_flat = labels.flatten()
+
+    for d in input_dirs:
+        features_path = d / Path(cfg["features"]).name
+        features = np.load(features_path)["features"]
+        feature_arrays.append(features.reshape(features.shape[0], -1))
+
+    if not feature_arrays:
+        raise ValueError("No input directories provided in config")
+
+    data = np.hstack(feature_arrays)
+    labels = np.tile(labels_flat, len(feature_arrays))
 
     clf = train_model(data, labels, n_estimators=cfg.get("n_estimators", 100))
 

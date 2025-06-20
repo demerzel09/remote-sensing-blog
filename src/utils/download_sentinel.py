@@ -333,7 +333,9 @@ def main() -> None:
         zip_output=args.zip_output,
     )
     if args.config:
-        shutil.copy(args.config, Path(out_dir) / Path(args.config).name)
+        # Store the configuration under a standard name so other
+        # commands can easily locate it later.
+        shutil.copy(args.config, Path(out_dir) / "download.yaml")
 
 
 if __name__ == "__main__":
