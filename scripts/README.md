@@ -20,9 +20,10 @@ source venv/bin/activate
 Downloads Sentinel imagery from the Copernicus Data Space using the
 `sentinelhub` service at `https://sh.dataspace.copernicus.eu`.
 The module resides under `src/utils/` and caches files inside
-`data/raw/<OUTPUT>/<SATELLITE>/<lat_lon_dates>` based on the selected location
-and date range. When using `scripts/download_sentinel2.sh` this resolves to
-`data/raw/example_run/Sentinel-2/35.6000_139.7000_2024-01-01_2024-01-31`. The
+`data/raw/<OUTPUT>/<SATELLITE>/<FOLDER>` based on the selected location
+and date range. `<FOLDER>` defaults to `<lat_lon_dates>` but can be
+overridden with `--name`. When using `scripts/download_sentinel2.sh`
+this resolves to `data/raw/example_run/Sentinel-2/hita`. The
 generated folder also contains the used `download.yaml`, which
 `preprocess_sentinel2.sh` reads to find the downloaded bands. When
 run with a YAML configuration, the file is copied into the download directory for
@@ -91,5 +92,5 @@ present:
 ```bash
 python -m src.utils.worldcover_to_label \
   --worldcover data/wc2021_kyusyu_bbox \
-  --sentinel-dir data/example_run/Sentinel-2/35.6000_139.7000_2024-01-01_2024-01-31
+  --sentinel-dir data/example_run/Sentinel-2/hita
 ```

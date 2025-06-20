@@ -21,7 +21,7 @@
             "module": "src.pipeline.cloud_removal",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
-            "args": ["--input-dir","data/example_run/Sentinel-2/33.5890_130.2730_2024-01-01_2024-01-31"]
+            "args": ["--input-dir","data/example_run/Sentinel-2/hita"]
         },
         {
             "name": "Mosaic Data",
@@ -30,7 +30,7 @@
             "module": "src.pipeline.mosaic",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
-            "args": ["--input-dir","data/example_run/Sentinel-2/33.5890_130.2730_2024-01-01_2024-01-31",
+            "args": ["--input-dir","data/example_run/Sentinel-2/hita",
                     "--method","best"]
         },
         {
@@ -41,7 +41,7 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": ["--config","configs/preprocess.yaml",
-            "--input-dir","data/example_run/Sentinel-2/33.5890_130.2730_2024-01-01_2024-01-31"]
+            "--input-dir","data/example_run/Sentinel-2/hita"]
         },
         {
             "name": "download ESA WorldCover Country",
@@ -78,8 +78,8 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "--worldcover","data/wc2021_kyusyu_bbox",
-                //"--sentinel-dir","data/example_run/Sentinel-2/33.5890_130.2730_2024-01-01_2024-01-31"
-                "--sentinel-dir","data/example_run/Sentinel-2/33.9160_130.7450_2024-01-01_2024-02-16"
+                //"--sentinel-dir","data/example_run/Sentinel-2/hita"
+                "--sentinel-dir","data/example_run/Sentinel-2/karatzu"
             ]
         },
         {

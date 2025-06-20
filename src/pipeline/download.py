@@ -15,7 +15,7 @@ def main() -> None:
     parser.add_argument("--output", required=True, help="Output directory")
     parser.add_argument(
         "--name",
-        help="Optional subfolder name created under the output directory",
+        help="Optional folder name placed under the satellite directory",
     )
     parser.add_argument(
         "--sh-base-url",
@@ -32,14 +32,13 @@ def main() -> None:
     args = parser.parse_args()
 
     base_dir = Path(args.output)
-    if args.name:
-        base_dir = base_dir / args.name
 
     out_dir = download_from_config(
         args.config,
         base_dir,
         sh_base_url=args.sh_base_url,
         sh_token_url=args.sh_token_url,
+        name=args.name,
     )
     # Later pipeline stages expect the config file to be named
     # ``download.yaml`` inside the download directory.

@@ -71,8 +71,8 @@ WorldCover タイルから `labels.tif` を切り出すには
 ```bash
 python -m src.utils.worldcover_to_label \
   --worldcover data/wc2021_kyusyu_bbox \
-  --sentinel-dir data/example_run/Sentinel-2/35.6000_139.7000_2024-01-01_2024-01-31 \
-  --output data/example_run/Sentinel-2/35.6000_139.7000_2024-01-01_2024-01-31/labels.tif
+  --sentinel-dir data/example_run/Sentinel-2/hita \
+  --output data/example_run/Sentinel-2/hita/labels.tif
 ```
 
 #### WorldCover タイルだけを取得する
@@ -159,9 +159,9 @@ NumPy arrays only.
 You can fetch sample imagery directly from the Copernicus Data Space using
 `src/utils/download_sentinel.py`. The script relies on **sentinelhub-py** and
 queries the `https://sh.dataspace.copernicus.eu` service. Downloads are cached
-under `data/raw/<OUTPUT>/<NAME>/<SATELLITE>/<lat_lon_dates>` based on location and time range. The
-`<NAME>` directory is only created when the `--name` option is provided. For the
-example scripts this becomes `data/raw/example_run/Sentinel-2/35.6000_139.7000_2024-01-01_2024-01-31`.
+under `data/raw/<OUTPUT>/<SATELLITE>/<FOLDER>` where `<FOLDER>` is either the
+automatically generated `<lat_lon_dates>` or the value passed to `--name`. For
+the example scripts this becomes `data/raw/example_run/Sentinel-2/hita`.
 The directory also contains a copy of `download.yaml` which later steps read to
 determine which bands were saved.
 
