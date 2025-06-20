@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 
-from ..utils.cloud_free import apply_cloud_mask_to_directory
+from ..utils.cloud_removal_sentinel import apply_cloud_mask_to_directory
 
 
 def main() -> None:
