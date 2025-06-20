@@ -244,8 +244,9 @@ bash scripts/train_model.sh
 bash scripts/predict_sentinel2.sh
 ```
 `preprocess_sentinel2.sh` が出力する `features.npz` はダウンロードディレクトリ内の
-`preprocess/` サブフォルダに保存されます。利用したいフォルダを `configs/train.yaml` の
-`input_dirs` に列挙したうえで `train_model.sh` を実行してください。各ディレクトリには
+`preprocess/` サブフォルダに保存されます。設定ファイルも同じフォルダに
+`features.yaml` の名前でコピーされるため、どの条件で特徴を算出したか後から確認できます。
+利用したいフォルダを `configs/train.yaml` の `input_dirs` に列挙したうえで `train_model.sh` を実行してください。各ディレクトリには
 対応するラベルファイル `labels.tif` も配置しておきます。さらに
 `features: preprocess/features.npz` と `labels: labels.tif` のように
 ダウンロードフォルダからの相対パスを設定してください。
