@@ -29,7 +29,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Preprocess Sentinel bands")
     parser.add_argument("--config", required=True, help="YAML config file")
     parser.add_argument("--input-dir", required=True, help="Directory with raw bands")
-    parser.add_argument("--output-dir", help="Directory for features")
+    parser.add_argument("--output-dir", help="Directory for dataset root")
     args = parser.parse_args()
 
     with open(args.config) as f:
@@ -37,9 +37,11 @@ def main() -> None:
 
     input_dir = Path(args.input_dir)
     if args.output_dir:
-        output_dir = Path(args.output_dir)
+        dataset_dir = Path(args.output_dir)
     else:
-        output_dir = input_dir / "preprocess"
+        dataset_dir = input_dir
+
+    output_dir = dataset_dir / "preprocess"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     dl_cfg_path = input_dir / "download.yaml"
@@ -85,7 +87,8 @@ def main() -> None:
     with open(out_path.with_suffix(".meta.json"), "w") as f:
         json.dump(meta_json, f)
 
-    shutil.copy(args.config, out_path.parent / Path(args.config).name)
+    config_copy_name = Path(cfg.get("features_out", "features.npz")).with_suffix(".yaml").name
+    shutil.copy(args.config, out_path.parent / config_copy_name)
     if dl_cfg_path.exists():
         shutil.copy(dl_cfg_path, out_path.parent / dl_cfg_path.name)
 
