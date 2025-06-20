@@ -1,0 +1,76 @@
+{
+    // IntelliSense を使用して利用可能な属性を学べます。
+    // 既存の属性の説明をホバーして表示します。
+    // 詳細情報は次を確認してください: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "download sentinel-2",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "src.pipeline.download",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": ["--config","configs/download.yaml","--output","data/example_run"]
+        },
+        {
+            "name": "preprocess sentinel-2",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "src.pipeline.preprocess",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": ["--config","configs/preprocess.yaml",
+            "--input-dir","data/example_run/Sentinel-2/33.5890_130.2730_2024-01-01_2024-01-31"]
+        },
+        {
+            "name": "download ESA WorldCover Country",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "src.utils.download_worldcover_datasets",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--country","Japan",
+                "--output","data/wc2021_japan",
+                "--version","v200/2021/map/"                  
+            ]
+        },
+        {
+            "name": "download ESA WorldCover BBOX",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "src.utils.download_worldcover_datasets",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--bbox","30","129","34","132",
+                "--output","data/wc2021_kyusyu_bbox",
+                "--version","v200/2021/map/",
+            ]
+        },
+        {
+            "name": "Create Worldcover Label.tif of BBOX",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "src.utils.worldcover_to_label",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--worldcover","data/wc2021_kyusyu_bbox",
+                "--sentinel-dir","data/example_run/Sentinel-2/33.5890_130.2730_2024-01-01_2024-01-31"
+            ]
+        },
+        {
+            "name": "train sentinel-2",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "src.pipeline.train",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": ["--config","configs/train.yaml",
+            "--input-dir","data/example_run/Sentinel-2/33.5890_130.2730_2024-01-01_2024-02-28/preprocess",
+            "--output-dir","outputs/model_example"]
+        }
+    ]
+}

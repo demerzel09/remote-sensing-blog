@@ -56,7 +56,6 @@ env/
 
 # Editor directories and files
 .idea/
-.vscode/
 
 # Data and output directories
 data/
