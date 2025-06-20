@@ -87,7 +87,7 @@ def _prioritized_mosaic(band_paths: list[Path], scl_paths: list[Path], output_pa
         cloud_mask = np.isin(scls, (3, 7, 8, 9, 10, 11))
         cloud_frac = cloud_mask.mean(axis=(1, 2))
         scene_weights = np.clip(1.0 - cloud_frac, 0.0, None)
-
+        
         for r in range(h):
             for c in range(w):
                 pr = priority[:, r, c]
@@ -105,6 +105,7 @@ def _prioritized_mosaic(band_paths: list[Path], scl_paths: list[Path], output_pa
                     out[:, r, c] = np.sum(
                         bands_stack[idxs, :, r, c] * p_weights[:, None], axis=0
                     )
+
     else:  # median composite
         mask = priority == 0
         expanded = mask[:, None, :, :]
