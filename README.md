@@ -66,6 +66,7 @@ WorldCover タイルから `labels.tif` を切り出すには
 `src.utils.worldcover_to_label` を利用します。`--worldcover` にタイルを保存した
 ディレクトリ、`--sentinel-dir` に `download.yaml` を含む Sentinel‑2 のダウンロード
 フォルダを指定してください。
+このスクリプトは指定範囲と重なるタイルのみを読み込むため、タイルが多い場合もメモリ使用量を抑えられます。
 
 ```bash
 python -m src.utils.worldcover_to_label \

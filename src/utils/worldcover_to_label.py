@@ -24,6 +24,7 @@ import rasterio
 from rasterio.merge import merge
 from rasterio.warp import reproject, Resampling
 from rasterio.windows import from_bounds
+from rasterio.coords import disjoint_bounds
 
 
 def parse_bbox(cfg: dict) -> tuple[float, float, float, float]:
@@ -83,8 +84,22 @@ def main() -> None:
     wc_files = sorted(wc_dir.glob("*.tif"))
     if not wc_files:
         raise FileNotFoundError(f"No WorldCover tiles found in {wc_dir}")
-    srcs = [rasterio.open(fp) for fp in wc_files]
-    mosaic, transform = merge(srcs)
+
+    bbox_bounds = bbox
+    srcs: list[rasterio.io.DatasetReader] = []
+    for fp in wc_files:
+        src = rasterio.open(fp)
+        if disjoint_bounds(src.bounds, bbox_bounds):
+            src.close()
+        else:
+            srcs.append(src)
+
+    if not srcs:
+        raise RuntimeError(
+            f"No WorldCover tiles intersect bounding box {bbox_bounds}"
+        )
+
+    mosaic, transform = merge(srcs, bounds=bbox_bounds)
     for src in srcs:
         src.close()
 
