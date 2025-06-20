@@ -26,6 +26,12 @@ def main() -> None:
         type=str,
         help="Sentinel Hub auth URL",
     )
+    parser.add_argument(
+        "--mosaic-method",
+        default="best",
+        choices=["best", "median"],
+        help="Pixel compositing method when mosaicking scenes",
+    )
     args = parser.parse_args()
 
     out_dir = download_from_config(
@@ -39,7 +45,7 @@ def main() -> None:
     shutil.copy(args.config, Path(out_dir) / Path(args.config).name)
 
     # Mosaic all downloaded scenes into a single stack
-    mosaic_sentinel_directory(Path(out_dir))
+    mosaic_sentinel_directory(Path(out_dir), method=args.mosaic_method)
 
 
 if __name__ == "__main__":
