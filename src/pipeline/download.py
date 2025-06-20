@@ -7,6 +7,7 @@ from ..utils.download_sentinel import (
     SH_TOKEN_URL,
 )
 from ..utils.mosaic import mosaic_sentinel_directory
+from ..utils.cloud_free import apply_cloud_mask_to_directory
 
 
 def main() -> None:
@@ -33,6 +34,8 @@ def main() -> None:
         sh_base_url=args.sh_base_url,
         sh_token_url=args.sh_token_url,
     )
+    # Remove cloudy pixels in each scene before mosaicking
+    apply_cloud_mask_to_directory(Path(out_dir))
     shutil.copy(args.config, Path(out_dir) / Path(args.config).name)
 
     # Mosaic all downloaded scenes into a single stack
