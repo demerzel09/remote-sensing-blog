@@ -236,6 +236,8 @@ Individual steps can also be executed via the helper scripts in `scripts/`:
 
 ```bash
 bash scripts/download_sentinel2.sh
+bash scripts/cloud_free_sentinel2.sh
+bash scripts/mosaic_sentinel2.sh
 bash scripts/preprocess_sentinel2.sh
 bash scripts/train_model.sh
 bash scripts/predict_sentinel2.sh
