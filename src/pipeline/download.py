@@ -14,6 +14,10 @@ def main() -> None:
     parser.add_argument("--config", required=True, help="Path to YAML config")
     parser.add_argument("--output", required=True, help="Output directory")
     parser.add_argument(
+        "--name",
+        help="Optional subfolder name created under the output directory",
+    )
+    parser.add_argument(
         "--sh-base-url",
         default=SH_BASE_URL,
         type=str,
@@ -27,9 +31,13 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    base_dir = Path(args.output)
+    if args.name:
+        base_dir = base_dir / args.name
+
     out_dir = download_from_config(
         args.config,
-        args.output,
+        base_dir,
         sh_base_url=args.sh_base_url,
         sh_token_url=args.sh_token_url,
     )

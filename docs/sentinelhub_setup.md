@@ -17,8 +17,9 @@ Alternatively provide `--sh-base-url` and `--sh-token-url` when running
 `download_sentinel.py` or the pipeline downloader to override these endpoints
 without setting environment variables.
 
-Downloads are cached under `data/raw/<OUTPUT>/<SATELLITE>/<lat_lon_dates>` based on the selected
-location and date range. For instance the example scripts store files in
+Downloads are cached under `data/raw/<OUTPUT>/<NAME>/<SATELLITE>/<lat_lon_dates>` based on the selected
+location and date range. The additional `<NAME>` folder is only created when the `--name` option is
+given. For instance the example scripts store files in
 `data/raw/example_run/Sentinel-2/35.6000_139.7000_2024-01-01_2024-01-31`. Each folder includes
 the original `download.yaml` which the preprocessing step reads back to locate
 the bands. Requests are sent to `https://sh.dataspace.copernicus.eu`. If the
