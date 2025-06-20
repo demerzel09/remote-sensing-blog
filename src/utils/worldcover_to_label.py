@@ -51,7 +51,8 @@ def load_reference_meta(sentinel_dir: Path, cfg: dict) -> dict:
         path = tiffs[0]
     with rasterio.open(path) as src:
         meta = src.meta.copy()
-    meta.update(count=1, dtype="uint8")
+    # Ensure nodata is valid for uint8 output
+    meta.update(count=1, dtype="uint8", nodata=0)
     return meta
 
 
