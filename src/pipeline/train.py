@@ -27,11 +27,11 @@ def main() -> None:
     label_arrays = []
 
     for d in input_dirs:
-        features_path = d / Path(cfg["features"]).name
+        features_path = d / cfg["features"]
         features = np.load(features_path)["features"]
         feature_arrays.append(features.reshape(features.shape[0], -1))
 
-        labels_path = d / Path(cfg["labels"]).name
+        labels_path = d / cfg["labels"]
         with rasterio.open(labels_path) as src:
             labels = src.read(1)
         label_arrays.append(labels.flatten())
