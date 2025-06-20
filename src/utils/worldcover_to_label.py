@@ -10,7 +10,7 @@ Example
 python -m src.utils.worldcover_to_label \
     --worldcover data/wc2021_kyusyu_bbox \
     --sentinel-dir data/example_run/Sentinel-2/35.6_139.7_2024-01-01_2024-01-31 \
-    --output labels.tif
+    # --output can be omitted; defaults to labels.tif in the Sentinel directory
 ```
 """
 
@@ -62,12 +62,18 @@ def main() -> None:
         required=True,
         help="Sentinel download directory containing download.yaml",
     )
-    p.add_argument("--output", help="Output label path; defaults to <sentinel-dir>/labels.tif")
+    p.add_argument(
+        "--output",
+        help=(
+            "Output label path. If omitted, labels.tif is created inside the given"
+            " Sentinel directory"
+        ),
+    )
     args = p.parse_args()
 
     wc_dir = Path(args.worldcover)
     s2_dir = Path(args.sentinel_dir)
-    out_path = Path(args.output) if args.output else s2_dir / "labels.tif"
+    out_path = Path(args.output) if args.output is not None else s2_dir / "labels.tif"
 
     cfg = yaml.safe_load((s2_dir / "download.yaml").read_text())
     bbox = parse_bbox(cfg)
