@@ -8,6 +8,10 @@ import numpy as np
 import yaml
 
 from ..classification.predict import predict_model
+from ..preprocess.cloudmask import cloud_mask
+from ..preprocess.stack_bands import stack_bands
+from ..preprocess.features import compute_features
+from .preprocess import split_band_stack
 
 
 def main() -> None:
@@ -26,10 +30,41 @@ def main() -> None:
     output_dir = Path(args.output_dir)
 
     features_path = input_dir / "preprocess" / cfg["features"]
-    data = np.load(features_path)["features"]
-    meta_path = input_dir / "preprocess" / Path(cfg.get("meta", Path(cfg["features"]).with_suffix(".meta.json"))).name
-    with open(meta_path) as f:
-        meta = json.load(f)
+    if features_path.exists():
+        data = np.load(features_path)["features"]
+        meta_path = (
+            input_dir
+            / "preprocess"
+            / Path(cfg.get("meta", Path(cfg["features"]).with_suffix(".meta.json"))).name
+        )
+        with open(meta_path) as f:
+            meta = json.load(f)
+    else:
+        dl_cfg_path = input_dir / "download.yaml"
+        if dl_cfg_path.exists():
+            dl_cfg = yaml.safe_load(dl_cfg_path.read_text())
+            spectral = [b for b in dl_cfg.get("bands", []) if b not in {"SCL", "dataMask"}]
+            stack = input_dir / "BANDS.tif"
+            if stack.exists():
+                missing = [b for b in spectral if not (input_dir / f"{b}.tif").exists()]
+                if missing:
+                    split_band_stack(stack, spectral)
+            else:
+                raise ValueError("BANDS.tif not found in input directory")
+
+            bands = [input_dir / f"{b}.tif" for b in spectral]
+            scl_path = input_dir / "SCL.tif" if "SCL" in dl_cfg.get("bands", []) else input_dir / Path(cfg["scl"]).name
+            mask_path = (
+                input_dir / "MASK.tif" if "dataMask" in dl_cfg.get("bands", []) else input_dir / Path(cfg.get("mask", "")).name if cfg.get("mask") else None
+            )
+        else:
+            bands = [input_dir / Path(p).name for p in cfg["bands"]]
+            scl_path = input_dir / Path(cfg["scl"]).name
+            mask_path = input_dir / Path(cfg.get("mask", "")).name if cfg.get("mask") else None
+
+        mask = cloud_mask(scl_path, mask_path)
+        stack, meta = stack_bands(bands, mask)
+        data = compute_features(stack, red_idx=2, nir_idx=3, swir_idx=4)
 
     clf = joblib.load(model_dir / cfg["model"])
     out_path = output_dir / "prediction.tif"
