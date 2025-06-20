@@ -159,7 +159,8 @@ NumPy arrays only.
 You can fetch sample imagery directly from the Copernicus Data Space using
 `src/utils/download_sentinel.py`. The script relies on **sentinelhub-py** and
 queries the `https://sh.dataspace.copernicus.eu` service. Downloads are cached
-under `data/raw/<OUTPUT>/<SATELLITE>/<lat_lon_dates>` based on location and time range. For the
+under `data/raw/<OUTPUT>/<NAME>/<SATELLITE>/<lat_lon_dates>` based on location and time range. The
+`<NAME>` directory is only created when the `--name` option is provided. For the
 example scripts this becomes `data/raw/example_run/Sentinel-2/35.6000_139.7000_2024-01-01_2024-01-31`.
 The directory also contains a copy of `download.yaml` which later steps read to
 determine which bands were saved.
@@ -248,8 +249,9 @@ bash scripts/predict_sentinel2.sh
 `features.yaml` の名前でコピーされるため、どの条件で特徴を算出したか後から確認できます。
 利用したいフォルダを `configs/train.yaml` の `input_dirs` に列挙したうえで `train_model.sh` を実行してください。各ディレクトリには
 対応するラベルファイル `labels.tif` も配置しておきます。さらに
-`features: preprocess/features.npz` と `labels: labels.tif` のように
-ダウンロードフォルダからの相対パスを設定してください。
+`features: features.npz` と `labels: labels.tif` のように
+ダウンロードフォルダからの相対パスを設定してください。特徴ファイルはスクリプト側で
+自動的に `preprocess/` サブフォルダを参照します。
 
 
 

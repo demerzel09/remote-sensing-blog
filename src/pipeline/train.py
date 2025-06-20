@@ -27,7 +27,7 @@ def main() -> None:
     label_arrays = []
 
     for d in input_dirs:
-        features_path = d / cfg["features"]
+        features_path = d / "preprocess" / cfg["features"]
         features = np.load(features_path)["features"]
         feature_arrays.append(features.reshape(features.shape[0], -1))
 

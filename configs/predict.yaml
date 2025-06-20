@@ -1,4 +1,5 @@
-# The features file is expected inside the directory passed to `--features-dir`.
+# The features file is expected under the `preprocess` directory of
+# the directory provided to `--input-dir`.
 features: features.npz
-model: outputs/model.pkl
-output: outputs/prediction.tif
+# Path to the trained model relative to `--model-dir`.
+model: model.pkl
