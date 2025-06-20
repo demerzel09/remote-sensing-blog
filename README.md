@@ -159,7 +159,8 @@ NumPy arrays only.
 You can fetch sample imagery directly from the Copernicus Data Space using
 `src/utils/download_sentinel.py`. The script relies on **sentinelhub-py** and
 queries the `https://sh.dataspace.copernicus.eu` service. Downloads are cached
-under `data/raw/<OUTPUT>/<SATELLITE>/<lat_lon_dates>` based on location and time range. For the
+under `data/raw/<OUTPUT>/<NAME>/<SATELLITE>/<lat_lon_dates>` based on location and time range. The
+`<NAME>` directory is only created when the `--name` option is provided. For the
 example scripts this becomes `data/raw/example_run/Sentinel-2/35.6000_139.7000_2024-01-01_2024-01-31`.
 The directory also contains a copy of `download.yaml` which later steps read to
 determine which bands were saved.
