@@ -59,6 +59,12 @@ download folder after all scenes are retrieved. Use
 `src/utils/mosaic_scenes.py` on the extracted archive to merge the dated
 subfolders back into single-band images.
 
+## `cloud_free_sentinel2.sh` and `mosaic_sentinel2.sh`
+After downloading scenes you can remove cloudy pixels in each dated folder with
+`cloud_free_sentinel2.sh`. The script invokes `src.pipeline.cloud_free` on the
+download directory. Afterwards combine all dates into a single stack with
+`mosaic_sentinel2.sh` which runs `src.pipeline.mosaic`.
+
 ## `run_sentinel2_pipeline.sh`
 A helper script that runs the full Sentinel-2 workflow using the configuration
 files stored in `configs/`. Each pipeline step copies its YAML configuration
