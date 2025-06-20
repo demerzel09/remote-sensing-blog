@@ -33,7 +33,7 @@
             "args": [
                 "--country","Japan",
                 "--output","data/wc2021_japan",
-                "--version","v200/2021/map/"                  
+                "--version","v200/2021/map/"
             ]
         },
         {
