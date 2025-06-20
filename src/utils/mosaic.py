@@ -7,6 +7,7 @@ from typing import Iterable
 
 import rasterio
 from rasterio.merge import merge
+import numpy as np
 import yaml
 
 from .download_sentinel import split_band_stack, DEFAULT_BANDS
@@ -42,7 +43,66 @@ def mosaic_rasters(raster_paths: Iterable[Path], output_path: Path) -> Path:
     return output_path
 
 
-def mosaic_sentinel_directory(out_dir: Path) -> Path:
+def _prioritized_mosaic(band_paths: list[Path], scl_paths: list[Path], output_path: Path, method: str = "best") -> Path:
+    """Composite scenes using SCL-based pixel priority.
+
+    Parameters
+    ----------
+    band_paths : list[Path]
+        ``BANDS.tif`` files from each scene.
+    scl_paths : list[Path]
+        ``SCL.tif`` files matching ``band_paths`` order.
+    output_path : Path
+        Where to save the composite image.
+    method : {"best", "median"}
+        Pixel selection strategy. ``"best"`` picks the single best pixel based
+        on SCL priority while ``"median"`` computes the median over clear pixels.
+    """
+
+    if method not in {"best", "median"}:
+        raise ValueError("method must be 'best' or 'median'")
+
+    band_srcs = [rasterio.open(p) for p in band_paths]
+    scl_srcs = [rasterio.open(p) for p in scl_paths]
+
+    bands_stack = np.stack([s.read() for s in band_srcs])
+    scls = np.stack([s.read(1) for s in scl_srcs])
+    meta = band_srcs[0].meta.copy()
+
+    for s in band_srcs + scl_srcs:
+        s.close()
+
+    # Priority levels: clear < unclassified < cloudy/shadow
+    priority = np.full_like(scls, 2, dtype=np.uint8)
+    priority[np.isin(scls, [4, 5, 6])] = 0  # vegetation, bare, water
+    priority[np.isin(scls, [7])] = 1        # unclassified
+
+    h, w = priority.shape[1:]
+    out = np.empty((bands_stack.shape[1], h, w), dtype=bands_stack.dtype)
+
+    if method == "best":
+        idx = np.argmin(priority, axis=0)
+        rows, cols = np.indices((h, w))
+        for b in range(out.shape[0]):
+            out[b] = bands_stack[:, b, :, :][idx, rows, cols]
+    else:  # median composite
+        mask = priority == 0
+        expanded = mask[:, None, :, :]
+        data = bands_stack.astype("float32")
+        data[~expanded] = np.nan
+        out = np.nanmedian(data, axis=0)
+        nodata = meta.get("nodata", -9999.0)
+        out = np.where(np.isnan(out), nodata, out).astype(bands_stack.dtype)
+
+    meta.update({"height": h, "width": w, "count": out.shape[0]})
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with rasterio.open(output_path, "w", **meta) as dst:
+        dst.write(out)
+
+    return output_path
+
+
+def mosaic_sentinel_directory(out_dir: Path, method: str = "best") -> Path:
     """Mosaic subdirectories produced by ``download_sentinel``.
 
     Parameters
@@ -62,7 +122,12 @@ def mosaic_sentinel_directory(out_dir: Path) -> Path:
     band_paths = _collect("BANDS.tif")
     if not band_paths:
         raise FileNotFoundError("BANDS.tif not found in scene folders")
-    mosaic_rasters(band_paths, out_dir / "BANDS.tif")
+
+    scl_paths = _collect("SCL.tif")
+    if scl_paths and method in {"best", "median"}:
+        _prioritized_mosaic(band_paths, scl_paths, out_dir / "BANDS.tif", method)
+    else:
+        mosaic_rasters(band_paths, out_dir / "BANDS.tif")
 
     cfg_path = out_dir / "download.yaml"
     spectral = DEFAULT_BANDS
@@ -71,7 +136,6 @@ def mosaic_sentinel_directory(out_dir: Path) -> Path:
         spectral = [b for b in cfg.get("bands", DEFAULT_BANDS) if b not in {"SCL", "dataMask"}]
     split_band_stack(out_dir / "BANDS.tif", spectral)
 
-    scl_paths = _collect("SCL.tif")
     if scl_paths:
         mosaic_rasters(scl_paths, out_dir / "SCL.tif")
 
