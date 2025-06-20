@@ -55,8 +55,10 @@ def _prioritized_mosaic(band_paths: list[Path], scl_paths: list[Path], output_pa
     output_path : Path
         Where to save the composite image.
     method : {"best", "median"}
-        Pixel selection strategy. ``"best"`` picks the single best pixel based
-        on SCL priority while ``"median"`` computes the median over clear pixels.
+        Pixel selection strategy. ``"best"`` picks the best pixel by SCL
+        priority. If multiple scenes share the same priority the pixels are
+        blended using a weighted average that favors scenes with less overall
+        cloud cover. ``"median"`` computes the median over clear pixels.
     """
 
     if method not in {"best", "median"}:
@@ -81,10 +83,26 @@ def _prioritized_mosaic(band_paths: list[Path], scl_paths: list[Path], output_pa
     out = np.empty((bands_stack.shape[1], h, w), dtype=bands_stack.dtype)
 
     if method == "best":
-        idx = np.argmin(priority, axis=0)
-        rows, cols = np.indices((h, w))
-        for b in range(out.shape[0]):
-            out[b] = bands_stack[:, b, :, :][idx, rows, cols]
+        # Scene cloud fractions for weighting
+        cloud_mask = np.isin(scls, (3, 7, 8, 9, 10, 11))
+        cloud_frac = cloud_mask.mean(axis=(1, 2))
+        weights = np.clip(1.0 - cloud_frac, 0.0, None)
+
+        for r in range(h):
+            for c in range(w):
+                pr = priority[:, r, c]
+                min_p = pr.min()
+                idxs = np.where(pr == min_p)[0]
+                if len(idxs) == 1:
+                    out[:, r, c] = bands_stack[idxs[0], :, r, c]
+                else:
+                    w = weights[idxs]
+                    total = w.sum()
+                    if total == 0:
+                        w = np.full_like(w, 1 / len(w))
+                    else:
+                        w = w / total
+                    out[:, r, c] = np.sum(bands_stack[idxs, :, r, c] * w[:, None], axis=0)
     else:  # median composite
         mask = priority == 0
         expanded = mask[:, None, :, :]
