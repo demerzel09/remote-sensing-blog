@@ -92,6 +92,7 @@ def _prioritized_mosaic(band_paths: list[Path], scl_paths: list[Path], output_pa
         rows, cols = np.indices((h, w))
         for b in range(out.shape[0]):
             out[b] = bands_stack[:, b, :, :][idx, rows, cols]
+
     else:  # median composite
         mask = priority == 0
         expanded = mask[:, None, :, :]

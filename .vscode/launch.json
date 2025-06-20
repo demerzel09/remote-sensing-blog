@@ -14,6 +14,25 @@
             "args": ["--config","configs/download.yaml","--output","data/example_run"]
         },
         {
+            "name": "Cloud Removal",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "src.pipeline.cloud_removal",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": ["--input-dir","data/example_run/Sentinel-2/33.5890_130.2730_2024-01-01_2024-01-31"]
+        },
+        {
+            "name": "Mosaic Data",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "src.pipeline.mosaic",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": ["--input-dir","data/example_run/Sentinel-2/33.5890_130.2730_2024-01-01_2024-01-31",
+                    "--method","best"]
+        },
+        {
             "name": "preprocess sentinel-2",
             "type": "debugpy",
             "request": "launch",
