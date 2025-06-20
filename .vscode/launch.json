@@ -90,7 +90,7 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": ["--config","configs/train.yaml",
-            "--output-dir","outputs/model_example"]
+            "--output-dir","data/outputs/model_example"]
         }
     ]
 }

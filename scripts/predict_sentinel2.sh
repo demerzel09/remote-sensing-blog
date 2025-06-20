@@ -6,8 +6,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Hard coded paths for a single example run
 FEATURES_DIR="data/processed/example_run"
-MODEL_DIR="outputs/model_example"
-OUTPUT_DIR="outputs/prediction_example"
+MODEL_DIR="data/outputs/model_example"
+OUTPUT_DIR="data/outputs/prediction_example"
 CONFIG="configs/predict.yaml"
 
 python -m src.pipeline.predict --config "$CONFIG" \

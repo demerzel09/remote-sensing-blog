@@ -5,7 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Hard coded paths for a single example run
-OUTPUT_DIR="outputs/model_example"
+OUTPUT_DIR="data/outputs/model_example"
 CONFIG="configs/train.yaml"
 # The training script reads feature directories from $CONFIG
 
