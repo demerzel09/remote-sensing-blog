@@ -79,6 +79,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--satellite", default="Sentinel-2", help="Platform name")
     parser.add_argument("--bands", nargs="+", help="Bands to request")
     parser.add_argument("--output", help="Output directory")
+    parser.add_argument(
+        "--name",
+        help="Optional folder name created under the satellite directory",
+    )
     parser.add_argument("--buffer", type=float, default=0.005, help="BBox buffer in degrees")
     parser.add_argument("--max-cloud", type=float, default=None, help="Maximum cloud cover percentage")
     parser.add_argument("--min-valid", type=float, default=None, help="Minimum percent of valid pixels")
@@ -108,6 +112,7 @@ def parse_args() -> argparse.Namespace:
         args.max_cloud = cfg.get("max_cloud", args.max_cloud)
         args.min_valid = cfg.get("min_valid", args.min_valid)
         args.zip_output = cfg.get("zip_output", args.zip_output)
+        args.name = cfg.get("name", args.name)
     if None in {args.lat, args.lon, args.start, args.end}:
         parser.error("lat, lon, start and end must be provided")
     if args.bands is None:
@@ -122,6 +127,7 @@ def download_sentinel(
     end: str,
     satellite: str = "Sentinel-2",
     out_dir: str | Path | None = None,
+    name: str | None = None,
     buffer: float = 0.005,
     resolution: int = 10,
     sh_base_url: str | None = None,
@@ -134,7 +140,10 @@ def download_sentinel(
     """Download selected bands using sentinelhub."""
     if bands is None:
         bands = DEFAULT_BANDS
-    sub_dir = build_output_dir(satellite, lat, lon, start, end)
+    if name:
+        sub_dir = Path(satellite) / name
+    else:
+        sub_dir = build_output_dir(satellite, lat, lon, start, end)
     out_dir = Path(out_dir).joinpath(sub_dir) if out_dir else sub_dir
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -295,7 +304,8 @@ def download_from_config(
     output_dir: str | Path | None = None,
     *,
     sh_base_url: str | None = None,
-        sh_token_url: str | None = None,
+    sh_token_url: str | None = None,
+    name: str | None = None,
 ) -> Path:
     cfg = yaml.safe_load(Path(config_path).read_text())
     return download_sentinel(
@@ -306,6 +316,7 @@ def download_from_config(
         satellite=cfg.get("satellite", "Sentinel-2"),
         buffer=cfg.get("buffer", 0.005),
         out_dir=output_dir,
+        name=name or cfg.get("name"),
         sh_base_url=sh_base_url,
         sh_token_url=sh_token_url,
         bands=cfg.get("bands", DEFAULT_BANDS),
@@ -324,6 +335,7 @@ def main() -> None:
         args.end,
         args.satellite,
         args.output,
+        name=args.name,
         buffer=args.buffer,
         sh_base_url=args.sh_base_url,
         sh_token_url=args.sh_token_url,
