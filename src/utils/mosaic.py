@@ -55,8 +55,9 @@ def _prioritized_mosaic(band_paths: list[Path], scl_paths: list[Path], output_pa
     output_path : Path
         Where to save the composite image.
     method : {"best", "median"}
-        Pixel selection strategy. ``"best"`` picks the single best pixel based
-        on SCL priority while ``"median"`` computes the median over clear pixels.
+        Pixel selection strategy. ``"best"`` picks the single best pixel based on
+        SCL priority (ties are broken by the scene's overall cloud fraction)
+        while ``"median"`` computes the median over clear pixels.
     """
 
     if method not in {"best", "median"}:
@@ -81,7 +82,13 @@ def _prioritized_mosaic(band_paths: list[Path], scl_paths: list[Path], output_pa
     out = np.empty((bands_stack.shape[1], h, w), dtype=bands_stack.dtype)
 
     if method == "best":
-        idx = np.argmin(priority, axis=0)
+        # overall cloudiness per scene for tie-breaking
+        cloud_mask = np.isin(scls, (3, 7, 8, 9, 10, 11))
+        cloud_frac = cloud_mask.mean(axis=(1, 2))
+
+        # prioritize by SCL category, breaking ties using cloud fraction
+        score = priority.astype(np.float32) * 10 + cloud_frac[:, None, None]
+        idx = np.argmin(score, axis=0)
         rows, cols = np.indices((h, w))
         for b in range(out.shape[0]):
             out[b] = bands_stack[:, b, :, :][idx, rows, cols]
