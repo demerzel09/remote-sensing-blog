@@ -2,7 +2,9 @@
 input_dirs:
   - data/example_run/Sentinel-2/33.9160_130.7450_2024-01-01_2024-02-16
   # - path/to/another/download_folder
-features: preprocess/features.npz
+# Features are always stored under the `preprocess` directory of each
+# input folder. Only the file name is specified here.
+features: features.npz
 # Label raster inside each input directory
 labels: labels.tif
 model_name: model.pkl
