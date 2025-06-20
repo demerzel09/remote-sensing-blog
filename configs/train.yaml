@@ -5,5 +5,5 @@ input_dirs:
 features: preprocess/features.npz
 # Label raster inside each input directory
 labels: labels.tif
-model_out: outputs/model.pkl
+model_name: model.pkl
 n_estimators: 100

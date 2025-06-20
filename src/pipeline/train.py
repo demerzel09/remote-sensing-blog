@@ -44,7 +44,7 @@ def main() -> None:
 
     clf = train_model(data, labels, n_estimators=cfg.get("n_estimators", 100))
 
-    model_path = output_dir / Path(cfg.get("model_out", "model.pkl")).name
+    model_path = output_dir / cfg.get("model_name", "model.pkl")
     model_path.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(clf, model_path)
 
