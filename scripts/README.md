@@ -84,7 +84,9 @@ The default parameters fetch 2021 tiles covering the Kyushu region of Japan
 ## `worldcover_to_label.py`
 Cropping the downloaded tiles to match a Sentinel‑2 scene can be done with the
 `src.utils.worldcover_to_label` command. Provide the tile directory and the
-Sentinel download folder containing `download.yaml`:
+Sentinel download folder containing `download.yaml`. The script loads only
+tiles overlapping the requested area, reducing memory usage when many tiles are
+present:
 
 ```bash
 python -m src.utils.worldcover_to_label \
