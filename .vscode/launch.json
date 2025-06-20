@@ -11,7 +11,8 @@
             "module": "src.pipeline.download",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
-            "args": ["--config","configs/download.yaml","--output","data/example_run"]
+            "args": ["--config","configs/download_fukuoka.yaml",            
+                "--output","data/example_run"]
         },
         {
             "name": "Cloud Removal",
@@ -29,7 +30,8 @@
             "module": "src.pipeline.mosaic",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
-            "args": ["--input-dir","data/example_run/Sentinel-2/33.5890_130.2730_2024-01-01_2024-01-31",
+            "args": ["--input-dir","data/example_run/Sentinel-2/33.9160_130.7450_2024-01-01_2024-02-16",
+            //"args": ["--input-dir","data/example_run/Sentinel-2/33.5890_130.2730_2024-01-01_2024-01-31",
                     "--method","best"]
         },
         {

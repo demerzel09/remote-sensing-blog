@@ -119,13 +119,14 @@ def mosaic_sentinel_directory(out_dir: Path, method: str = "best") -> Path:
         Directory containing dated subfolders with ``BANDS.tif`` and optional
         ``SCL.tif``/``MASK.tif`` files.
     """
+    print(f"out_dir = {out_dir}")
     subdirs = [d for d in out_dir.iterdir() if d.is_dir()]
     if not subdirs:
         raise FileNotFoundError("No scene folders found for mosaicking")
 
     def _collect(name: str) -> list[Path]:
         paths = [d / name for d in subdirs if (d / name).exists()]
-        return paths if len(paths) == len(subdirs) else []
+        return paths
 
     band_paths = _collect("BANDS.tif")
     if not band_paths:

@@ -1,0 +1,16 @@
+lat: 33.916
+lon: 130.745
+start: '2024-01-01'
+end: '2024-02-16'
+max_cloud: 50
+min_valid: 30
+satellite: 'Sentinel-2'
+bands:
+  - B02
+  - B03
+  - B04
+  - B08
+  - B11
+  - SCL
+  - dataMask
+buffer: 0.1
