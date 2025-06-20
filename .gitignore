@@ -73,3 +73,9 @@ src/utils/download_sentinel - コピー.py
 configs/download - コピー.yaml
 configs/download - コピー.yaml:Zone.Identifier
 scripts/preprocess_sentinel2 - コピー.sh:Zone.Identifier
+configs/download_fukuoka - コピー.yaml:Zone.Identifier
+configs/download_karatzu - コピー.yaml:Zone.Identifier
+configs/download_hita - コピー.yaml:Zone.Identifier
+.gitignore
+scripts/download_sentinel2 - コピー.sh:Zone.Identifier
+scripts/download_sentinel2 - コピー.sh:Zone.Identifier
