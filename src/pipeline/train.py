@@ -24,20 +24,23 @@ def main() -> None:
     input_dirs = [Path(d) for d in cfg.get("input_dirs", [])]
 
     feature_arrays = []
-    with rasterio.open(cfg["labels"]) as src:
-        labels = src.read(1)
-    labels_flat = labels.flatten()
+    label_arrays = []
 
     for d in input_dirs:
         features_path = d / Path(cfg["features"]).name
         features = np.load(features_path)["features"]
         feature_arrays.append(features.reshape(features.shape[0], -1))
 
+        labels_path = d / Path(cfg["labels"]).name
+        with rasterio.open(labels_path) as src:
+            labels = src.read(1)
+        label_arrays.append(labels.flatten())
+
     if not feature_arrays:
         raise ValueError("No input directories provided in config")
 
     data = np.hstack(feature_arrays)
-    labels = np.tile(labels_flat, len(feature_arrays))
+    labels = np.hstack(label_arrays)
 
     clf = train_model(data, labels, n_estimators=cfg.get("n_estimators", 100))
 

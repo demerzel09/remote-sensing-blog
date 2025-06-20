@@ -3,6 +3,7 @@ input_dirs:
   - data/example_run/Sentinel-2/35.6000_139.7000_2024-01-01_2024-01-31/preprocess
   # - path/to/another/preprocess_folder
 features: features.npz
-labels: data/raw/labels.tif
+# Label raster inside each input directory
+labels: labels.tif
 model_out: outputs/model.pkl
 n_estimators: 100
