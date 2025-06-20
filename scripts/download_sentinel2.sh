@@ -9,13 +9,25 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT_DIR="data/example_run"
 
 python -m src.pipeline.download --output "$OUTPUT_DIR" \
+--config "configs/download_fukuoka.yaml" \
+--name fukuoka
+
+python -m src.pipeline.download --output "$OUTPUT_DIR" \
+--config "configs/download_kitakyusyu.yaml" \
+--name kitakyusyu
+
+python -m src.pipeline.download --output "$OUTPUT_DIR" \
+--config "configs/download_oita.yaml" \
+--name oita 
+
+python -m src.pipeline.download --output "$OUTPUT_DIR" \
 --config "configs/download_hita.yaml" \
 --name hita
 
 python -m src.pipeline.download --output "$OUTPUT_DIR" \
---config "configs/download_karatzu.yaml"
+--config "configs/download_karatzu.yaml" \
 --name karatzu
 
 python -m src.pipeline.download --output "$OUTPUT_DIR" \
---config "configs/download_aso.yaml"
+--config "configs/download_aso.yaml" \
 --name aso

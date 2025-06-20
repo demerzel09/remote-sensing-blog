@@ -79,3 +79,9 @@ configs/download_hita - コピー.yaml:Zone.Identifier
 .gitignore
 scripts/download_sentinel2 - コピー.sh:Zone.Identifier
 scripts/download_sentinel2 - コピー.sh:Zone.Identifier
+scripts/cloud_removal_sentinel2 - コピー.sh
+scripts/create_labels_of_bbox - コピー.sh
+scripts/create_labels_of_bbox - コピー.sh:Zone.Identifier
+scripts/mosaic_sentinel2 - コピー.sh:Zone.Identifier
+scripts/create_labels_of_bbox - コピー.sh:Zone.Identifier
+scripts/cloud_removal_sentinel2 - コピー.sh:Zone.Identifier

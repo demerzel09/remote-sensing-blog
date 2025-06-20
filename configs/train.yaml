@@ -1,6 +1,7 @@
 # Training data directories containing the feature file listed below
 input_dirs:
-  - data/example_run/Sentinel-2/33.9160_130.7450_2024-01-01_2024-02-16
+  - data/example_run/Sentinel-2/kitakyusyu
+  - data/example_run/Sentinel-2/oita
   # - path/to/another/download_folder
 # Features are always stored under the `preprocess` directory of each
 # input folder. Only the file name is specified here.
