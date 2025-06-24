@@ -42,7 +42,22 @@ def main() -> None:
     data = np.hstack(feature_arrays)
     labels = np.hstack(label_arrays)
 
-    clf = train_model(data, labels, n_estimators=cfg.get("n_estimators", 100))
+    sample_fraction = cfg.get("sample_fraction")
+    if sample_fraction:
+        n_samples = data.shape[1]
+        size = int(n_samples * sample_fraction)
+        rng = np.random.default_rng(0)
+        idx = rng.choice(n_samples, size=size, replace=False)
+        data = data[:, idx]
+        labels = labels[idx]
+
+    clf = train_model(
+        data,
+        labels,
+        n_estimators=cfg.get("n_estimators", 100),
+        max_depth=cfg.get("max_depth"),
+        max_samples=cfg.get("max_samples"),
+    )
 
     model_path = output_dir / cfg.get("model_name", "model.pkl")
     model_path.parent.mkdir(parents=True, exist_ok=True)
