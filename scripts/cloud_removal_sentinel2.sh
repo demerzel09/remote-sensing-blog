@@ -11,3 +11,12 @@ python -m src.pipeline.cloud_removal \
 
 python -m src.pipeline.cloud_removal \
     --input-dir "data/example_run/Sentinel-2/oita"
+
+python -m src.pipeline.cloud_removal \
+    --input-dir "data/example_run/Sentinel-2/hita"
+
+python -m src.pipeline.cloud_removal \
+    --input-dir "data/example_run/Sentinel-2/karatzu"
+
+python -m src.pipeline.cloud_removal \
+    --input-dir "data/example_run/Sentinel-2/aso"

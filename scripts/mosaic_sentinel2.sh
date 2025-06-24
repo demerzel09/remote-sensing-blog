@@ -14,3 +14,15 @@ python -m src.pipeline.mosaic \
 python -m src.pipeline.mosaic \
     --input-dir "data/example_run/Sentinel-2/oita" \
 --method best
+
+python -m src.pipeline.mosaic \
+    --input-dir "data/example_run/Sentinel-2/hita" \
+--method best
+
+python -m src.pipeline.mosaic \
+    --input-dir "data/example_run/Sentinel-2/karatzu" \
+--method best
+
+python -m src.pipeline.mosaic \
+    --input-dir "data/example_run/Sentinel-2/aso" \
+--method best

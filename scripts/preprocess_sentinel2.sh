@@ -14,3 +14,12 @@ python -m src.pipeline.preprocess --config "$CONFIG" \
 
 python -m src.pipeline.preprocess --config "$CONFIG" \
     --input-dir "data/example_run/Sentinel-2/oita" \
+
+python -m src.pipeline.preprocess --config "$CONFIG" \
+    --input-dir "data/example_run/Sentinel-2/hita"
+
+python -m src.pipeline.preprocess --config "$CONFIG" \
+    --input-dir "data/example_run/Sentinel-2/karatzu"
+
+python -m src.pipeline.preprocess --config "$CONFIG" \
+    --input-dir "data/example_run/Sentinel-2/aso"
