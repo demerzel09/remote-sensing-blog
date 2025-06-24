@@ -253,6 +253,10 @@ bash scripts/predict_sentinel2.sh
 ダウンロードフォルダからの相対パスを設定してください。特徴ファイルはスクリプト側で
 自動的に `preprocess/` サブフォルダを参照します。
 
+`configs/train.yaml` では `n_estimators` のほか `max_depth` や `max_samples`
+を設定できます。大量のピクセルから一部のみ学習したい場合は
+`sample_fraction` に 0〜1 の値を指定してください。
+
 
 
 ## Running the pipeline

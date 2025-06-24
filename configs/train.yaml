@@ -10,3 +10,9 @@ features: features.npz
 labels: labels.tif
 model_name: model.pkl
 n_estimators: 100
+# Optional RandomForest parameters
+# max_depth: null   # e.g. 10
+# max_samples: null # e.g. 0.5 to use half the pixels per tree
+
+# Fraction of all pixels to randomly sample before training
+# sample_fraction: null  # e.g. 0.1 for 10%
