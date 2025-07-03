@@ -11,7 +11,7 @@
             "module": "src.pipeline.download",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
-            "args": ["--config","configs/download_fukuoka.yaml",
+            "args": ["--config","configs/download_oita.yaml",
                 "--output","data/example_run"]
         },
         {

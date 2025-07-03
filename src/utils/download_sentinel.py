@@ -147,7 +147,6 @@ def download_sentinel(
     out_dir = Path(out_dir).joinpath(sub_dir) if out_dir else sub_dir
     out_dir.mkdir(parents=True, exist_ok=True)
 
-
     client_id = os.getenv("SENTINELHUB_CLIENT_ID")
     client_secret = os.getenv("SENTINELHUB_CLIENT_SECRET")
     if not client_id or not client_secret:
@@ -190,7 +189,10 @@ def download_sentinel(
     except InvalidClientError:
         raise RuntimeError("認証失敗: CLIENT_ID / SECRET / URL を確認してください")
 
+    print(f"search = {search}")
+
     items = list(search)
+    print(f"search len = {len(items)}")
     if not items:
         sys.exit("⚠️  指定期間・範囲にシーンがありません")
 
@@ -242,6 +244,9 @@ def download_sentinel(
         dt = datetime.fromisoformat(dt_str.replace("Z", ""))
         date_dir = out_dir / dt.strftime("%Y-%m-%dT%H%M%S")
         date_dir.mkdir(parents=True, exist_ok=True)
+
+        print(f"date_dir")
+
 
         request = SentinelHubRequest(
             data_folder=str(date_dir),
