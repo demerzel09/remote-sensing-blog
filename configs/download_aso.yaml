@@ -1,8 +1,8 @@
 lat: 32.891
 lon: 131.078
 start: '2024-01-01'
-end: '2024-01-31'
-max_cloud: 50
+end: '2024-02-28'
+max_cloud: 40
 min_valid: 30
 satellite: 'Sentinel-2'
 bands:

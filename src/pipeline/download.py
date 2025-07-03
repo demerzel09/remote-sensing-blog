@@ -32,7 +32,7 @@ def main() -> None:
     args = parser.parse_args()
 
     base_dir = Path(args.output)
-
+    print(f"config file = {args.config}")
     out_dir = download_from_config(
         args.config,
         base_dir,
