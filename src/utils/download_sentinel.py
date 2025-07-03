@@ -243,6 +243,10 @@ def download_sentinel(
         dt_str = item["properties"]["datetime"]
         dt = datetime.fromisoformat(dt_str.replace("Z", ""))
         date_dir = out_dir / dt.strftime("%Y-%m-%dT%H%M%S")
+        bands_file = date_dir / "BANDS.tif"
+        if bands_file.exists():
+            print(f"Skipping {dt_str}: {bands_file} already exists")
+            continue
         date_dir.mkdir(parents=True, exist_ok=True)
 
         print(f"date_dir")
