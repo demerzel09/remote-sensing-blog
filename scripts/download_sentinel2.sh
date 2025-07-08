@@ -18,7 +18,7 @@ python -m src.pipeline.download --output "$OUTPUT_DIR" \
 
 python -m src.pipeline.download --output "$OUTPUT_DIR" \
 --config "configs/download_oita.yaml" \
---name oita 
+--name oita
 
 python -m src.pipeline.download --output "$OUTPUT_DIR" \
 --config "configs/download_hita.yaml" \

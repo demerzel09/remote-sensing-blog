@@ -11,8 +11,10 @@
             "module": "src.pipeline.download",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
-            "args": ["--config","configs/download_oita.yaml",
-                "--output","data/example_run"]
+            "args": ["--config","configs/download_aso.yaml",
+                "--name","aso",
+                "--output","data/example_run"
+            ]
         },
         {
             "name": "Cloud Removal",

@@ -185,12 +185,12 @@ def download_sentinel(
             time=(start, end),
             filter=cloud_filter,
             fields={"include": ["id", "properties.datetime", "properties.eo:cloud_cover"]},
+            limit=100
         )
     except InvalidClientError:
         raise RuntimeError("認証失敗: CLIENT_ID / SECRET / URL を確認してください")
 
-    print(f"search = {search}")
-
+    print(f"search = {search.get_ids()}")
     items = list(search)
     print(f"search len = {len(items)}")
     if not items:
