@@ -10,5 +10,6 @@ CONFIG="configs/train.yaml"
 # The training script reads feature directories from $CONFIG
 
 python -m src.pipeline.train --config "$CONFIG" \
-    --output-dir "$OUTPUT_DIR"
+    --output-dir "$OUTPUT_DIR" \
+    --verbose "${VERBOSE:-0}"
 

@@ -14,6 +14,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Train classification model")
     parser.add_argument("--config", required=True, help="YAML config file")
     parser.add_argument("--output-dir", required=True, help="Directory for model")
+    parser.add_argument(
+        "--verbose",
+        type=int,
+        default=0,
+        help="Verbosity level for RandomForest training",
+    )
     args = parser.parse_args()
 
     with open(args.config) as f:
@@ -57,6 +63,7 @@ def main() -> None:
         n_estimators=cfg.get("n_estimators", 100),
         max_depth=cfg.get("max_depth"),
         max_samples=cfg.get("max_samples"),
+        verbose=args.verbose,
     )
 
     model_path = output_dir / cfg.get("model_name", "model.pkl")
