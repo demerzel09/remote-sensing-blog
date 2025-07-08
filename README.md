@@ -256,6 +256,8 @@ bash scripts/predict_sentinel2.sh
 `configs/train.yaml` では `n_estimators` のほか `max_depth` や `max_samples`
 を設定できます。大量のピクセルから一部のみ学習したい場合は
 `sample_fraction` に 0〜1 の値を指定してください。
+学習の進捗を表示したい場合は `VERBOSE=1 bash scripts/train_model.sh` のように
+環境変数 `VERBOSE` を設定してください。
 
 
 

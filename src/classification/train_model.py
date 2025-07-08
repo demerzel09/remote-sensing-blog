@@ -9,6 +9,7 @@ def train_model(
     random_state=0,
     max_depth=None,
     max_samples=None,
+    verbose=0,
 ):
     """Train a RandomForest model.
 
@@ -27,6 +28,8 @@ def train_model(
         Maximum depth of the trees.
     max_samples : int, float or None, optional
         Number or fraction of samples to draw for training each tree.
+    verbose : int, optional
+        Verbosity level for ``RandomForestClassifier``.
     """
     X = features.reshape(features.shape[0], -1).T
     y = labels.flatten()
@@ -38,6 +41,7 @@ def train_model(
         random_state=random_state,
         max_depth=max_depth,
         max_samples=max_samples,
+        verbose=verbose,
     )
     clf.fit(X, y)
     return clf
