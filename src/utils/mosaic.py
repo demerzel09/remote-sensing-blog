@@ -117,7 +117,9 @@ def mosaic_sentinel_directory(out_dir: Path, method: str = "best") -> Path:
     ----------
     out_dir : Path
         Directory containing dated subfolders with ``BANDS.tif`` and optional
-        ``SCL.tif``/``MASK.tif`` files.
+        ``SCL.tif``/``MASK.tif`` files. When ``method`` is ``"best"`` or
+        ``"median"``, ``SCL.tif`` (and ``MASK.tif`` if present) are mosaicked
+        using the same prioritized pixel selection as ``BANDS.tif``.
     """
     print(f"out_dir = {out_dir}")
     subdirs = [d for d in out_dir.iterdir() if d.is_dir()]
@@ -133,7 +135,8 @@ def mosaic_sentinel_directory(out_dir: Path, method: str = "best") -> Path:
         raise FileNotFoundError("BANDS.tif not found in scene folders")
 
     scl_paths = _collect("SCL.tif")
-    if scl_paths and method in {"best", "median"}:
+    use_priority = scl_paths and method in {"best", "median"}
+    if use_priority:
         _prioritized_mosaic(band_paths, scl_paths, out_dir / "BANDS.tif", method)
     else:
         mosaic_rasters(band_paths, out_dir / "BANDS.tif")
@@ -146,10 +149,17 @@ def mosaic_sentinel_directory(out_dir: Path, method: str = "best") -> Path:
     split_band_stack(out_dir / "BANDS.tif", spectral)
 
     if scl_paths:
-        mosaic_rasters(scl_paths, out_dir / "SCL.tif")
+        if use_priority:
+            _prioritized_mosaic(scl_paths, scl_paths, out_dir / "SCL.tif", method)
+        else:
+            mosaic_rasters(scl_paths, out_dir / "SCL.tif")
 
     mask_paths = _collect("MASK.tif")
     if mask_paths:
-        mosaic_rasters(mask_paths, out_dir / "MASK.tif")
+        if use_priority:
+            # apply the same pixel choices to the mask for consistency
+            _prioritized_mosaic(mask_paths, scl_paths, out_dir / "MASK.tif", method)
+        else:
+            mosaic_rasters(mask_paths, out_dir / "MASK.tif")
 
     return out_dir / "BANDS.tif"
