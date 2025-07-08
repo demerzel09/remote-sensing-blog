@@ -32,7 +32,7 @@
             "module": "src.pipeline.mosaic",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
-            "args": ["--input-dir","data/example_run/Sentinel-2/hita",
+            "args": ["--input-dir","data/example_run/Sentinel-2/oita",
                     "--method","best"]
         },
         {
@@ -104,7 +104,7 @@
             "args": ["--config","configs/predict.yaml",
             "--input-dir","data/example_run/Sentinel-2/oita",
             "--model-dir","data/outputs/model_example",
-            "--output-dir","data/outputs/prediction_example"]
+            "--output-dir","data/outputs/prediction_example/oita-all"]
         }
     ]
 }
