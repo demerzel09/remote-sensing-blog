@@ -1,6 +1,5 @@
 # Land Cover Classification Evaluation Metrics
 
-
 Remote sensing land cover classification models are commonly evaluated with categorical metrics derived from comparisons between model predictions and ground-truth labels (e.g., GT GeoTIFFs).
 
 ## Recommended Core Metrics
@@ -26,10 +25,9 @@ Remote sensing land cover classification models are commonly evaluated with cate
 - **Producer's Accuracy (PA):** For a given class, PA = correctly predicted pixels of that class / total ground-truth pixels of that class. It measures omission errors (how often true class pixels are missed).
 - **User's Accuracy (UA):** For a given class, UA = correctly predicted pixels of that class / total predicted pixels of that class. It measures commission errors (how often predicted class pixels are incorrect).
 
-
 ### Visualizing differences between `prediction.tif` and `labels.tif`
 
-- **Difference heatmap (`difference.tif`):** Exporting the per-pixel absolute class gap (|prediction − label|) as a GeoTIFF produces a heatmap-style layer where 0 denotes perfect agreement and larger values highlight pixels with greater disagreement. Pixels without GT labels remain nodata.
+- **Difference heatmap (`difference.tif`):** Exporting the per-pixel absolute class gap (|prediction − label|) as a GeoTIFF produces a heatmap-style layer where 0 denotes perfect agreement and larger values highlight pixels with greater disagreement. Pixels without GT labels remain nodata. 予測とGTが一致した画素は 0、もっとも差が大きかった画素は 254 として 8bit スケーリングされ、さらに小さな差でも視認できるよう平方根（γ=0.5）でコントラストを強調し、最低でも 32 以上の輝度に持ち上げています（255 は nodata）。K→B→C→Y→R の順で滑らかに変化するカラーマップを埋め込んでいるため、そのままGISに読み込んでもヒートマップとして可視化できます。`metrics.json` には元のギャップ統計値（最大値、平均値、ミスマッチ率）が保存され、数値的な確認にも利用できます。
 - **Use UA when overestimation matters:** UA drops when many predicted pixels for a class are false positives, so it is the better scalar indicator of "over-mapping" a class relative to the ground truth.
 - **Use PA when underestimation matters:** PA decreases when ground-truth pixels are missed (false negatives), making it the preferred metric when you care about areas where the model fails to map existing class extents.
 - **Pair the map with PA/UA:** The heatmap shows *where* large discrepancies occur, while UA pinpoints classes responsible for commission errors and PA highlights classes suffering omission errors. Reviewing both gives a balanced explanation for the intensity patterns in the difference layer.
