@@ -237,11 +237,22 @@ bash scripts/run_sentinel2_pipeline.sh
 Individual steps can also be executed via the helper scripts in `scripts/`:
 
 ```bash
+# 1. Download the data
 bash scripts/download_sentinel2.sh
+# 2. Remove clouds
 bash scripts/cloud_free_sentinel2.sh
+# 3. Integrate multiple cloud-removed datasets
 bash scripts/mosaic_sentinel2.sh
+# 4. Download the original training data (ESA WorldCover)
+#    Obtain all tiles covering the Kyushu region.　　　
+bash scripts/download_worldcover_for_label.sh
+# 5. Create training labels
+bash scripts/create_labels_of_bbox.sh
+# 6. Extract features (NDVI/NDWI)
 bash scripts/preprocess_sentinel2.sh
+# 5.Train a model using LightGBM with NDVI/NDWI features  (Regions: Ōita / Kitakyushu)
 bash scripts/train_model.sh
+# 6.Run inference using LightGBM
 bash scripts/predict_sentinel2.sh
 ```
 `preprocess_sentinel2.sh` が出力する `features.npz` はダウンロードディレクトリ内の
