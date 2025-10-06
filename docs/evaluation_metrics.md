@@ -13,7 +13,6 @@ Remote sensing land cover classification models are commonly evaluated with cate
 4. **F1 スコア（マクロ平均）** または **IoU / mIoU** – クラス不均衡に強い代表的な統合指標として、多クラス平均値を報告します。ピクセル単位のセマンティックセグメンテーションでは mIoU がよく採用されます。
 
 このセットをベースに、必要に応じて下記の補助指標を追加すると、報告内容に厚みが出ます。
-=======
 
 ## Confusion Matrix
 - **Definition:** A contingency table that compares predicted classes versus ground-truth classes for every pixel.
