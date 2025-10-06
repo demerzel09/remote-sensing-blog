@@ -1,5 +1,6 @@
 # Land Cover Classification Evaluation Metrics
 
+
 Remote sensing land cover classification models are commonly evaluated with categorical metrics derived from comparisons between model predictions and ground-truth labels (e.g., GT GeoTIFFs).
 
 ## Recommended Core Metrics
@@ -12,6 +13,7 @@ Remote sensing land cover classification models are commonly evaluated with cate
 4. **F1 スコア（マクロ平均）** または **IoU / mIoU** – クラス不均衡に強い代表的な統合指標として、多クラス平均値を報告します。ピクセル単位のセマンティックセグメンテーションでは mIoU がよく採用されます。
 
 このセットをベースに、必要に応じて下記の補助指標を追加すると、報告内容に厚みが出ます。
+=======
 
 ## Confusion Matrix
 - **Definition:** A contingency table that compares predicted classes versus ground-truth classes for every pixel.
@@ -24,6 +26,7 @@ Remote sensing land cover classification models are commonly evaluated with cate
 ## Producer's Accuracy and User's Accuracy
 - **Producer's Accuracy (PA):** For a given class, PA = correctly predicted pixels of that class / total ground-truth pixels of that class. It measures omission errors (how often true class pixels are missed).
 - **User's Accuracy (UA):** For a given class, UA = correctly predicted pixels of that class / total predicted pixels of that class. It measures commission errors (how often predicted class pixels are incorrect).
+
 
 ### Visualizing differences between `prediction.tif` and `labels.tif`
 
