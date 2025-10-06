@@ -1,6 +1,19 @@
 # Land Cover Classification Evaluation Metrics
 
-Remote sensing land cover classification models are commonly evaluated with categorical metrics derived from comparisons between model predictions and ground-truth labels (e.g., GT GeoTIFFs). The following indicators are widely used when assessing pixel-level predictions.
+
+Remote sensing land cover classification models are commonly evaluated with categorical metrics derived from comparisons between model predictions and ground-truth labels (e.g., GT GeoTIFFs).
+
+## Recommended Core Metrics
+
+多クラス土地被覆分類の実務評価では、以下の組み合わせを用いるのが一般的です。
+
+1. **混同行列** – まず全クラスの混同行列を作成し、誤分類の傾向を把握します。
+2. **全体精度 (Overall Accuracy)** – 全体の達成度を一目で把握する指標として併記します。
+3. **クラス別のプロデューサズ精度 (PA) とユーザーズ精度 (UA)** – 欠落誤差・過剰誤差を定量化し、どのクラスが課題かを診断します。
+4. **F1 スコア（マクロ平均）** または **IoU / mIoU** – クラス不均衡に強い代表的な統合指標として、多クラス平均値を報告します。ピクセル単位のセマンティックセグメンテーションでは mIoU がよく採用されます。
+
+このセットをベースに、必要に応じて下記の補助指標を追加すると、報告内容に厚みが出ます。
+=======
 
 ## Confusion Matrix
 - **Definition:** A contingency table that compares predicted classes versus ground-truth classes for every pixel.
@@ -13,6 +26,14 @@ Remote sensing land cover classification models are commonly evaluated with cate
 ## Producer's Accuracy and User's Accuracy
 - **Producer's Accuracy (PA):** For a given class, PA = correctly predicted pixels of that class / total ground-truth pixels of that class. It measures omission errors (how often true class pixels are missed).
 - **User's Accuracy (UA):** For a given class, UA = correctly predicted pixels of that class / total predicted pixels of that class. It measures commission errors (how often predicted class pixels are incorrect).
+
+
+### Visualizing differences between `prediction.tif` and `labels.tif`
+
+- **Difference heatmap (`difference.tif`):** Exporting the per-pixel absolute class gap (|prediction − label|) as a GeoTIFF produces a heatmap-style layer where 0 denotes perfect agreement and larger values highlight pixels with greater disagreement. Pixels without GT labels remain nodata.
+- **Use UA when overestimation matters:** UA drops when many predicted pixels for a class are false positives, so it is the better scalar indicator of "over-mapping" a class relative to the ground truth.
+- **Use PA when underestimation matters:** PA decreases when ground-truth pixels are missed (false negatives), making it the preferred metric when you care about areas where the model fails to map existing class extents.
+- **Pair the map with PA/UA:** The heatmap shows *where* large discrepancies occur, while UA pinpoints classes responsible for commission errors and PA highlights classes suffering omission errors. Reviewing both gives a balanced explanation for the intensity patterns in the difference layer.
 
 ## F1 Score
 - **Definition:** Harmonic mean of precision (UA) and recall (PA) per class, i.e., F1 = 2 × (Precision × Recall) / (Precision + Recall).
