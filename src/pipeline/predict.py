@@ -17,32 +17,12 @@ from .preprocess import split_band_stack
 from ..utils.io_raster import write_raster
 
 
-def _build_difference_heatmap_colormap() -> Dict[int, Tuple[int, int, int, int]]:
-    """Generate a perceptual heatmap colormap for the difference layer."""
-    anchor_positions = np.array([0, 64, 128, 192, 254], dtype=float)
-    anchor_colors = np.array(
-        [
-            [0, 0, 0],        # black for perfect agreement
-            [0, 96, 255],     # blue
-            [0, 255, 255],    # cyan
-            [255, 255, 0],    # yellow
-            [255, 0, 0],      # red for largest disagreement
-        ],
-        dtype=float,
-    )
-
-    colormap: Dict[int, Tuple[int, int, int, int]] = {}
-    for value in range(255):
-        rgb = [
-            float(np.interp(value, anchor_positions, anchor_colors[:, channel]))
-            for channel in range(3)
-        ]
-        rgba = np.clip(np.array([*rgb, 255.0]), 0, 255)
-        colormap[value] = tuple(int(round(float(channel))) for channel in rgba)
-    return colormap
-
-
-_DIFFERENCE_HEATMAP_COLORMAP = _build_difference_heatmap_colormap()
+_DIFFERENCE_HIGHLIGHT_COLORMAP: Dict[int, Dict[int, Tuple[int, int, int, int]]] = {
+    1: {
+        0: (0, 0, 0, 0),        # transparent for matching pixels
+        1: (255, 0, 0, 255),    # red highlight for mismatches
+    }
+}
 
 
 def _safe_divide(numerator: float, denominator: float) -> Optional[float]:
@@ -220,49 +200,37 @@ def main() -> None:
 
         metrics = _compute_core_metrics(predictions, labels)
 
-        # Export a difference heatmap (absolute class gap) for visual inspection.
+        # Export a binary mismatch highlight layer for visual inspection.
         difference_path = out_path.parent / "difference.tif"
-        visual_difference = np.full(predictions.shape, 255, dtype=np.uint8)
+        highlight = np.full(predictions.shape, 255, dtype=np.uint8)
         valid_diff_mask = labels > 0
         if np.any(valid_diff_mask):
             label_vals = labels[valid_diff_mask].astype(np.int32)
             pred_vals = predictions[valid_diff_mask].astype(np.int32)
-            abs_diff = np.abs(label_vals - pred_vals)
+            mismatch_mask = pred_vals != label_vals
 
-            max_gap = int(abs_diff.max()) if abs_diff.size else 0
-            mismatch_pixels = int(np.count_nonzero(abs_diff))
-            total_pixels = int(abs_diff.size)
-            mean_gap = float(abs_diff.mean()) if abs_diff.size else 0.0
-
-            if max_gap == 0:
-                scaled = np.zeros_like(abs_diff, dtype=np.uint8)
-            else:
-                normalized = abs_diff.astype(np.float32) / float(max_gap)
-                enhanced = np.sqrt(normalized)
-                scaled = np.rint(np.clip(enhanced * 254, 0, 254)).astype(np.uint8)
-                scaled = np.where(abs_diff > 0, np.clip(scaled, 32, 254), scaled)
-
-            visual_difference[valid_diff_mask] = scaled
+            highlight[valid_diff_mask] = mismatch_mask.astype(np.uint8)
 
             diff_meta = meta.copy()
             diff_meta.update(count=1, dtype="uint8", nodata=255)
             write_raster(
                 difference_path,
-                visual_difference[np.newaxis, ...],
+                highlight[np.newaxis, ...],
                 diff_meta,
-                colormap={1: _DIFFERENCE_HEATMAP_COLORMAP},
+                colormap=_DIFFERENCE_HIGHLIGHT_COLORMAP,
             )
 
             if metrics is not None:
+                total_pixels = int(mismatch_mask.size)
+                mismatch_pixels = int(mismatch_mask.sum())
                 metrics["difference_summary"] = {
-                    "max_gap": max_gap,
-                    "mean_gap": mean_gap,
+                    "mismatch_pixels": mismatch_pixels,
+                    "evaluated_pixels": total_pixels,
                     "mismatch_rate": _safe_divide(mismatch_pixels, total_pixels),
-                    "scaling": {
+                    "values": {
+                        "match": 0,
+                        "mismatch": 1,
                         "nodata": 255,
-                        "max_gap_encoded_as": 254,
-                        "gamma_correction": 0.5,
-                        "minimum_mismatch_intensity": 32,
                     },
                 }
 
