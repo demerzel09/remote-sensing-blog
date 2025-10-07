@@ -65,7 +65,6 @@
 # 実装
 
 ## 1. ESA公式のAPI（Sentinel-Hub）で雲の少ない日時のL2A(Sentinel-2のプロダクト）のデータを集める。
-# 1. Download the data
 bash scripts/download_sentinel2.sh
  - 雲被覆率  
 
