@@ -8,7 +8,8 @@
 ![review](https://storage.googleapis.com/zenn-user-upload/fc63310d6e90-20250606.jpg)
 
 # 概要
-  基本的な工程:  
+  ESA ( Sentinel-Hub )への登録
+  実装  
    1. ESAからとってきた雲の少ない日時のL2A(Sentinel-2のプロダクト）のデータを拾う。
    2. 雲のない部分で複数の日時のデータをESA公式のAPI（Sentinel-Hub）でモザイク処理を行い統合。
    3. ESAから WorldCoverという土地利用分類の教師データを集める。
@@ -60,17 +61,52 @@
      - GEEではフィルタ条件としても活用可能（例：cloud_cover < 20）
  - ## NDVI (植生/NDWI・水指数）
 
+# ESA ( Sentinel-Hub )への登録
 
+source ./set_env_sentinelhub_mine.sh
 
 # 実装
 
-## 1. ESA公式のAPI（Sentinel-Hub）で雲の少ない日時のL2A(Sentinel-2のプロダクト）のデータを集める。
-bash scripts/download_sentinel2.sh
- - 雲被覆率  
+## 1. 衛星データを取得
 
-## 2. 雲除去を行う
-# 2. Remove clouds
-bash scripts/cloud_free_sentinel2.sh
+```bash
+python -m src.pipeline.download --output data/example_run2 \
+--config "configs/download_fukuoka.yaml" \
+--name fukuoka
+```
+
+このスクリプトは、設定ファイル（YAML形式）に記載されたパラメータ（緯度・経度・期間など）に基づき、Sentinel-2 衛星データを自動でダウンロードします。  
+主な流れは以下の通りです。
+
+- コマンドライン引数で設定ファイルと出力先ディレクトリを指定
+- 設定ファイルからダウンロード条件（座標・期間・バンドなど）を読み込み
+- Sentinel Hub API を使って、指定範囲・期間の衛星画像を検索・取得
+- 画像データ（GeoTIFF形式）を自動でディレクトリに保存
+- 取得した画像をバンドごとに分割し、必要に応じて雲量や有効画素率でフィルタリング
+- 設定ファイルもダウンロードディレクトリにコピーし、後続処理で再利用可能に
+
+この自動化により、煩雑な衛星データ取得作業をシンプルに再現性高く実行できます。
+ESA公式のAPI（Sentinel-Hub）で雲の少ない日時のL2A(Sentinel-2のプロダクト）のデータを集めます。
+
+
+## 2. 雲除去処理の実行
+
+```bash
+python -m src.pipeline.cloud_removal --input-dir "data/example_run/Sentinel-2/fukuoka"
+```
+
+このスクリプトは、ダウンロード済みのSentinel-2 L2Aデータに対して雲除去を行います。
+`src/pipeline/cloud_removal.py` は、指定ディレクトリ内の各日付シーンごとに雲マスクを適用し、雲や影の影響を受けたピクセルを自動的にマスク（無効化）します。
+
+主な処理内容は以下の通りです。
+
+- コマンドライン引数（--input-dir）で入力ディレクトリを指定
+- ディレクトリ内の各日付サブフォルダに対し、SCLバンドやdataMaskバンドを用いて雲・影領域を判定
+- 雲・影と判定されたピクセルを、全バンド画像で無効値（例：-9999）に置換
+- 雲除去済みの画像を上書き保存
+
+この処理により、後続の解析やモザイク処理で雲の影響を大幅に低減できます。
+
 
 ## 3. 複数の日時の雲除去された部分でモザイク処理を行い(複数日時のデータからなる）統合データを作る。
 # 3. Integrate multiple cloud-removed datasets

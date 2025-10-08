@@ -8,12 +8,13 @@
             "name": "download sentinel-2",
             "type": "debugpy",
             "request": "launch",
+            "python": "${workspaceFolder}/.venv/bin/python",
             "module": "src.pipeline.download",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": ["--config","configs/download_aso.yaml",
                 "--name","aso",
-                "--output","data/example_run"
+                "--output","data/example_run2"
             ]
         },
         {
