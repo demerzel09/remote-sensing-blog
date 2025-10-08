@@ -1,0 +1,49 @@
+## Integration Notes for AWS COG + STAC Downloader
+
+1. Dependencies (add to requirements.txt)
+   pystac-client>=0.7
+   shapely>=2.0
+   pyproj>=3.6
+   pyyaml>=6.0
+   requests>=2.31
+   tqdm>=4.66
+
+2. Place this file at:
+   src/utils/download_aws.py
+
+3. Modify src/pipeline/download.py (minimal patch)
+
+   from utils.download_aws import download_from_config as aws_download
+   from utils.download_sentinel import download_from_config as sh_download
+
+   def main(cfg):
+       provider = cfg.get("provider", "aws_cog")
+       if provider == "aws_cog":
+           aws_download(cfg)
+       else:
+           sh_download(cfg)
+
+4. Keep existing YAML configs unchanged.
+   - lat/lon → auto handled as center
+   - start/end → merged to datetime
+   - max_cloud → cloud_cover_lt
+   - buffer (deg) → buffer_m (m)
+   - bands → assets
+
+   Example (no edits required):
+   lat: 33.589
+   lon: 130.273
+   start: "2024-01-01"
+   end: "2024-02-28"
+   max_cloud: 30
+   buffer: 0.1
+   bands: [B02, B03, B04, B08, B11, SCL, dataMask]
+
+   Optionally, add:
+   provider: aws_cog
+   buffer_m: 11100    # ≈ 0.1 degrees (about 11 km)
+
+5. Run as before:
+   python -m src.pipeline.download --config configs/download_fukuoka.yaml --output data --name fukuoka_202401
+
+   The script will automatically switch to AWS COG + STAC when provider: aws_cog is set.

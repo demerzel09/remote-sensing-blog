@@ -103,3 +103,5 @@ configs - コピー/preprocess.yaml
 configs - コピー/preprocess.yaml:Zone.Identifier
 configs - コピー/train.yaml
 configs - コピー/train.yaml:Zone.Identifier
+data_sentinel-hub/
+configs/sentinel-hub/

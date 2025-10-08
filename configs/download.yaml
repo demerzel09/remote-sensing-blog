@@ -1,0 +1,45 @@
+
+
+# configs/download_fukuoka.yaml（例）
+provider: aws_cog              # ← これを追加（sentinel_hub / aws_cog）
+collection: sentinel-2-l2a     # STACコレクション名（既定: sentinel-2-l2a）
+stac_endpoint: https://earth-search.aws.element84.com/v1
+
+aoi:                            # 範囲。既存の形式を尊重（どちらか使える形で）
+  type: Polygon
+  coordinates: [[[131.078,32.891],[130.273,33.589],[130.937,33.318],[129.986,33.487],[130.745,33.916],[131.468,33.380]]]
+
+# buffer_m: 10000  # 範囲 10km（メートル単位。bboxで指定した場合のみ有効）
+
+#buffer: 0.1 # 余白（度単位。緯度経度で指定した場合のみ有効）
+# # aso
+# lat: 32.891
+# lon: 131.078
+# # fukuoka
+# lat: 33.589
+# lon: 130.273
+# # hita
+# lat: 33.318
+# lon: 130.937
+# # karatzu
+# lat: 33.487
+# lon: 129.986
+# # kitakyusyu
+# lat: 33.916
+# lon: 130.745
+# # oita
+# lat: 33.380
+# lon: 131.468
+
+
+
+# または bbox での指定も許可
+# bbox: [130.2, 33.4, 130.8, 33.9]
+
+datetime: "2024-01-01/2024-02-28"
+cloud_cover_lt: 30
+max_items: 20
+out_dir: data/sentinel2/fukuoka
+
+# 取得するアセット（必要に応じて）
+assets: ["B02","B03","B04","B08",B11","SCL","dataMask"]   # もしくは ["visual"] や ["B04"]
