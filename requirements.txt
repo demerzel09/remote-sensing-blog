@@ -5,6 +5,10 @@ streamlit==1.45.1
 folium==0.19.7
 streamlit_folium==0.25.0
 PyYAML==6.0.2
+pystac-client>=0.7
+pyproj>=3.6
+pyyaml>=6.0
+requests>=2.31
 sentinelhub==3.11.1
-
-
+shapely>=2.0
+tqdm>=4.66

@@ -185,7 +185,7 @@ def download_sentinel(
             time=(start, end),
             filter=cloud_filter,
             fields={"include": ["id", "properties.datetime", "properties.eo:cloud_cover"]},
-            limit=100
+            limit=50
         )
     except InvalidClientError:
         raise RuntimeError("認証失敗: CLIENT_ID / SECRET / URL を確認してください")

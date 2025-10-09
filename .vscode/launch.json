@@ -12,8 +12,8 @@
             "module": "src.pipeline.download",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
-            "args": ["--config","configs/download_aso.yaml",
-                "--name","aso",
+            "args": ["--config","configs/download_fukuoka.yaml",
+                "--name","fukuoka",
                 "--output","data/example_run2"
             ]
         },
