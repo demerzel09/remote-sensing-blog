@@ -14,7 +14,7 @@
             "cwd": "${workspaceFolder}",
             "args": ["--config","configs/download_fukuoka.yaml",
                 "--name","fukuoka",
-                "--output","data/example_run2"
+                "--output","data/example_run"
             ]
         },
         {

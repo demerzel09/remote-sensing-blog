@@ -52,6 +52,7 @@ def main() -> None:
             args.config,
             base_dir,
             name=args.name,
+            # skip_existing=True
         )
     else:
         from ..utils.download_sentinel import download_from_config as sh_download_from_config

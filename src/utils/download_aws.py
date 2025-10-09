@@ -294,12 +294,83 @@ def _write_preview_masked(date_dir: Path):
     from PIL import Image
     Image.fromarray((img*255).astype(np.uint8)).save(date_dir / "preview_masked.png")
 
+
+# ---------------------------------------------------------------------
+# BANDS.tif 合成
+# ---------------------------------------------------------------------
+def _build_bands_tif(date_dir: Path, order: list[str], *, out_name="BANDS.tif"):
+    """
+    同一格子で保存済みの単バンド GeoTIFF（B02,B03,...,MASK など）を
+    指定順にスタックして <out_name> を作成する。
+    - 各バンドの内部マスクを AND して dataset mask に書き込む
+    - ファイルが存在しない場合はスキップ（警告出力）
+    """
+    paths = []
+    infos = []
+    for name in order:
+        fname = "MASK.tif" if name.lower() in ("datamask", "mask") else f"{name}.tif"
+        p = date_dir / fname
+        if not p.exists():
+            print(f"[warn] stack skip: {fname} not found in {date_dir.name}")
+            continue
+        paths.append(p)
+
+    if len(paths) < 1:
+        print(f"[info] no bands to stack in {date_dir}")
+        return
+
+    arrays = []
+    masks = []
+    base_meta = None
+    with rasterio.Env():
+        for i, p in enumerate(paths):
+            with rasterio.open(p) as src:
+                arr = src.read(1)  # 単バンド想定
+                m = src.dataset_mask()  # 0/255
+                if base_meta is None:
+                    base_meta = src.profile.copy()
+                    H, W = arr.shape
+                else:
+                    # 念のため形の一致を検査（既に同一格子で保存済みのはず）
+                    if arr.shape != (H, W):
+                        raise RuntimeError(f"Grid mismatch in {p.name}: got {arr.shape}, expected {(H, W)}")
+                arrays.append(arr)
+                masks.append(m)
+
+    # 出力メタ
+    meta = base_meta.copy()
+    meta.update({
+        "driver": "GTiff",
+        "count": len(arrays),
+        "dtype": np.result_type(*[a.dtype for a in arrays]).name,
+        "compress": "deflate",
+        "predictor": 2,
+        "tiled": True,
+    })
+    meta.pop("nodata", None)  # 内部maskを使用
+
+    # マスクは AND（全バンドで有効なピクセルのみ 255）
+    mask_all = np.where(np.all([(m > 0) for m in masks], axis=0), 255, 0).astype(np.uint8)
+
+    out_path = date_dir / out_name
+    with rasterio.open(out_path, "w", **meta) as dst:
+        for i, arr in enumerate(arrays, start=1):
+            dst.write(arr, i)
+        dst.write_mask(mask_all)
+
+    print(f"[info] stacked → {out_path.name} ({len(arrays)} bands)")
+
+
 # ---------------------------------------------------------------------
 # メイン処理
 # ---------------------------------------------------------------------
-def download_from_config(config_path: str | Path, output_dir: str | Path | None = None, *, name: str | None = None) -> Path:
+def download_from_config(config_path: str | Path, output_dir: str | Path | None = None, *, name: str | None = None, skip_existing: bool = False) -> Path:
     cfg = yaml.safe_load(Path(config_path).read_text()) or {}
     cfg = _normalize_config(cfg)
+
+    # 先頭の設定読取部に追記（既存変数の近くでOK）
+    make_bands_tif = bool(cfg.get("make_bands_tif", True))
+    bands_stack = cfg.get("bands_stack")  # 例: ["B02","B03","B04","dataMask"]
 
     if "datetime" not in cfg:
         raise ValueError("Config must include date range.")
@@ -361,15 +432,29 @@ def download_from_config(config_path: str | Path, output_dir: str | Path | None 
 
         # 基準バンドのダウンロード＆格子確定はこのまま
         tmp_base = date_dir / f"__tmp__{base_key}.tif"
-        _download_file(base_href, tmp_base)
-        base_data, base_transform, base_crs, base_prof, base_mask = _clip_read(tmp_base, bbox_deg)
-        tmp_base.unlink(missing_ok=True)
         base_out = date_dir / f"{base_key}.tif"
-        _save_geotiff(base_out, base_data, base_crs, base_transform, base_prof, mask=base_mask)
+        if skip_existing and base_out.exists():
+            print(f"[skip] {base_out.name} already exists, skipping download.")
+            with rasterio.open(base_out) as src:
+                base_data = src.read()
+                base_transform = src.transform
+                base_crs = src.crs
+                base_prof = src.profile.copy()
+                base_mask = src.dataset_mask()
+        else:
+            _download_file(base_href, tmp_base)
+            base_data, base_transform, base_crs, base_prof, base_mask = _clip_read(tmp_base, bbox_deg)
+            tmp_base.unlink(missing_ok=True)
+            _save_geotiff(base_out, base_data, base_crs, base_transform, base_prof, mask=base_mask)
 
         # --- 修正: 残りのバンド処理（大小無視でスキップ判定） ---
         for req_name, href in asset_map.items():
             if req_name.lower() == base_key.lower():
+                continue
+            out_name = "MASK" if req_name.lower()=="datamask" else req_name
+            dst = date_dir / f"{out_name}.tif"
+            if skip_existing and dst.exists():
+                print(f"[skip] {dst.name} already exists, skipping download.")
                 continue
             tmp = date_dir / f"__tmp__{req_name}.tif"
             _download_file(href, tmp)
@@ -388,8 +473,6 @@ def download_from_config(config_path: str | Path, output_dir: str | Path | None 
                 base_transform, base_crs,
                 (base_data.shape[1], base_data.shape[2]),
             )
-            out_name = "MASK" if req_name.lower()=="datamask" else req_name
-            dst = date_dir / f"{out_name}.tif"
             _save_geotiff(
                 dst, aligned, base_crs, base_transform, base_prof,
                 mask=mask_aligned,
@@ -417,6 +500,25 @@ def download_from_config(config_path: str | Path, output_dir: str | Path | None 
         
         _write_preview_masked(date_dir)
         print(f"✅  Saved to {date_dir}")
+        
+        # 5) BANDS.tif 生成（オプション）
+        if make_bands_tif:
+            # 順序決定：優先は bands_stack、無ければ YAMLの bands（assets_req）順
+            if bands_stack:
+                stack_order = list(bands_stack)
+            else:
+                # assets_req は YAMLのbands由来。ここから実在ファイルの候補に絞る
+                stack_order = []
+                for nm in assets_req:
+                    k = nm.lower()
+                    # dataMask は MASK.tif にマップ、visual/SCL等は任意で除外可
+                    if k in ("datamask", "mask", "b02", "b03", "b04", "b08", "b11"):
+                        stack_order.append(nm)
+                # 典型的には B02,B03,B04,dataMask を想定
+                if not stack_order:
+                    stack_order = ["B02","B03","B04","dataMask"]
+
+            _build_bands_tif(date_dir, stack_order, out_name="BANDS.tif")
 
     shutil.copy(config_path, out_root / "download.yaml")
     print(f"✅  Saved GeoTIFFs to {out_root}")
