@@ -2,8 +2,7 @@
  -  Sentinel-2データの土地利用分類。  
     Sentinel-2 は、ESA(欧州宇宙機関）が提供する リモートセンシングでもっともよくつかわれるフリーの高品質なデータです。  
     土地利用分類の分類を自前で学習して分類してようという企画です。
-    Google Earth などを使うと可視化・データ加工までの処理をAPI一発で取れたりするデータを、できるだけ自前で加工していきます。
-    一度は、やっておきたいリモートセンシングの基礎操作を自習します。
+    リモートセンシングのデータの基礎操作を一通りやってみます。
 ![review](https://storage.googleapis.com/zenn-user-upload/fc63310d6e90-20250606.jpg)
 
   ## 参考  
@@ -12,14 +11,13 @@
 
    - ### NDVI (植生/NDWI・水指数）について  
 
-     NDVI（正規化植生指数）は、衛星画像の赤色バンドと近赤外バンドを用いて植生の活性度を評価する 標です。
+     NDVI（正規化植生指数）は、衛星画像の赤色バンドと近赤外バンドを用いて植生の活性度を評価する 指標です。
      値は -1〜1 の範囲をとり、値が高いほど植生が活発であることを示します。
 
      NDWI（水域指数）は、近赤外バンドと短波赤外バンドを使って水域の分布を抽出する指標です。
      どちらもリモートセンシングで土地被覆分類や環境モニタリングに広く利用されています。
 
      **計算式とバンド**
-
      - NDVI = (B08 - B04) / (B08 + B04)
         - B08: 近赤外バンド（NIR, 10m解像度）
         - B04: 赤色バンド（Red, 10m解像度）
@@ -72,85 +70,181 @@ $\quad$Amazonがホストしているオープンデータセット。
 
 ```bash
 # 個別に処理
-python -m src.pipeline.download --output data/example_run2 \
+python -m src.pipeline.download \
+--output data/example_run2 \
 --config "configs/download_fukuoka.yaml" \
 --name fukuoka
+
 # まとめて処理
-./scripts/download_sentinel2.sh
+bash scripts/download_sentinel2.sh
 ```
 
-このスクリプトは、設定ファイル（YAML形式）に記載されたパラメータ（緯度・経度・期間など）に
-基づき、Sentinel-2 衛星データを自動でダウンロードします。主な流れは以下の通りです。  
+設定ファイル（YAML形式）に記載されたパラメータ（緯度・経度・期間など）に基づき、Sentinel-2 衛星データを自動でダウンロードします。
 
-- コマンドライン引数で設定ファイルと出力先ディレクトリを指定
 - 設定ファイルからダウンロード条件（座標・期間・バンドなど）を読み込み
-- Sentinel Hub API を使って、指定範囲・期間の衛星画像を検索・取得
-- 画像データ（GeoTIFF形式）を自動でディレクトリに保存
-- 取得した画像をバンドごとに分割し、必要に応じて雲量や有効画素率でフィルタリング
-- 設定ファイルもダウンロードディレクトリにコピーし、後続処理で再利用可能に
-
-この自動化により、煩雑な衛星データ取得作業をシンプルに再現性高く実行できます。
-ESA公式のAPI（Sentinel-Hub）で雲の少ない日時のL2A(Sentinel-2のプロダクト）のデータを集めます。
+- AWSから、指定範囲・期間・雲被覆率の衛星画像を検索・ダウンロード
+- クラスデータが入っているSCLから、有効領域の MASK.tifを作成
+- MASK.tif から、有効画素率でフィルタリング
+  
+AWS COG + STAC のデータを、ESA公式のAPI（Sentinel-Hub）で雲の少ない日時のL2A(Sentinel-2のプロダクト）と同等のデータに加工します。
 
 
 ## 2. 雲除去処理の実行
 
 ```bash
 # 個別に処理
-python -m src.pipeline.cloud_removal --input-dir "data/example_run/Sentinel-2/fukuoka"
+python -m src.pipeline.cloud_removal \
+--input-dir "data/example_run/Sentinel-2/fukuoka"
+
 # まとめて処理
-./scripts/cloud_removal_sentinel2.sh
+bash scripts/cloud_removal_sentinel2.sh
 ```
 
-このスクリプトは、ダウンロード済みのSentinel-2 L2Aデータに対して雲除去を行います。
+ダウンロード済みのSentinel-2 L2Aデータに対して雲除去を行います。
 `src/pipeline/cloud_removal.py` は、指定ディレクトリ内の各日付シーンごとに雲マスクを適用し、雲や影の影響を受けたピクセルを自動的にマスク（無効化）します。
 
-主な処理内容は以下の通りです。
-
-- コマンドライン引数（--input-dir）で入力ディレクトリを指定
-- ディレクトリ内の各日付サブフォルダに対し、SCLバンドやdataMaskバンドを用いて雲・影領域を判定
+- SCLバンドやdataMaskバンドを用いて雲・影領域を判定
 - 雲・影と判定されたピクセルを、全バンド画像で無効値（例：-9999）に置換
 - 雲除去済みの画像を上書き保存
 
 この処理により、後続の解析やモザイク処理で雲の影響を大幅に低減できます。
 
 
-## 3. 複数の日時の雲除去された部分でモザイク処理を行い(複数日時のデータからなる）統合データを作る。
-# 3. Integrate multiple cloud-removed datasets
+## 3. 複数の日時の雲除去された部分でモザイク処理（統合処理）を行う
+
+```bash
+# 個別に処理
+python -m src.pipeline.mosaic \
+--input-dir "data/example_run/Sentinel-2/fukuoka" \
+--method best
+
+# まとめて処理
 bash scripts/mosaic_sentinel2.sh
+```
 
-## 4. ESAから WorldCoverという土地利用分類の教師データを集める。
-# 4. Download the original training data (ESA WorldCover)
-#    Obtain all tiles covering the Kyushu region.　　　
+複数日時の雲除去済みSentinel-2データ（各日付サブフォルダ内のBANDS.tif等）を統合し、雲の少ないピクセルを優先的に選択して1枚のモザイク画像を作成します。
+
+- 複数の日付サブフォルダのBANDS.tif（およびSCL.tif, MASK.tif）を収集
+- SCL（シーン分類）情報を活用し、雲や影の少ないピクセルを優先して統合
+   - `best`：各ピクセル位置で最も良好な（雲のない）値を選択
+   - `median`：雲のないピクセルの中央値を合成
+- SCL.tifやMASK.tifも同様にモザイク処理  
+
+この処理により、複数日時のデータから雲の影響を最小限に抑えた高品質な合成画像を得ることができます。
+
+
+## 4. WorldCoverという土地利用分類の教師データを集める
+
+```bash
+# 個別に処理
+python -m src.utils.download_worldcover_datasets \
+--bbox 30 129 34 132 \
+--output "data/wc2021_kyusyu_bbox" \
+--version v200/2021/map/
+
+# まとめて処理
 bash scripts/download_worldcover_for_label.sh
+```
 
-## 5. 自前でNDVI(植生/NDWI・水指数）を特徴量として計算
-# 5. Extract features (NDVI/NDWI)
+ESA WorldCover（2021年版など）の土地利用分類データを、指定した範囲（国名またはバウンディングボックス）で自動的にダウンロードします。
+
+ - 指定範囲に重なる3度×3度タイルのリストを自動で計算
+ - 各タイルのGeoTIFF（例: ESA_WorldCover_10m_2021_v200_N33E130_Map.tif）をS3から取得
+ - 国名指定（--country）もしくは緯度経度範囲（--bbox）で取得範囲を指定できます。
+
+取得したデータは後続のラベル生成や機械学習にそのまま活用できます。
+
+
+## 5. NDVI(植生/NDWI・水指数）を特徴量として計算  
+
+```bash
+# 個別に処理
+python -m src.pipeline.preprocess \
+
+# まとめて処理
 bash scripts/preprocess_sentinel2.sh
+```
+
+Sentinel-2データに対してNDVIやNDWIなどの植生・水域指標を計算し、特徴量として保存します。
+
+- 設定ファイル（YAML）から計算対象のバンドやパラメータを読み込み
+- 各シーンのBANDS.tif等から必要なバンド（例：B04, B08, B11）を抽出
+- NDVI, NDWIなどの指標をピクセルごとに計算
+
+この処理により、後続の機械学習や解析のための特徴量データセットが作成されます。
 
 ## 6. 教師データを作成
-# 6. Create training labels
+
+```bash
+# 個別に処理
+python -m src.utils.worldcover_to_label \
+
+# まとめて処理
 bash scripts/create_labels_of_bbox.sh
+```
+
+WorldCoverの土地利用分類データ（ラベル画像）と、Sentinel-2の観測データを重ね合わせて、機械学習用の教師データ（ラベル画像）を作成します。
+
+- WorldCoverディレクトリからラベル画像（GeoTIFF）を読み込み
+- Sentinel-2ディレクトリ内の各シーンと空間的に重なる範囲を抽出
+- 必要に応じてリサンプリングや座標系変換を行い、ラベル画像と観測データのピクセルを対応させ、土地利用クラス（例：森林、農地、水域など）のラベルを割り当て
+
+この処理により、衛星画像と正解ラベルが対応した教師データセットを生成、土地利用分類などの機械学習タスクに活用できます。
 
 ## 7. LightGBMで、学習
-# 7. Train a model using LightGBM with NDVI/NDWI features (Regions: Ōita / Kitakyushu)
-bash scripts/train_model.sh
+```bash
+# 個別に処理
+python -m src.pipeline.train \
+--config configs/train.yaml \
+--output-dir data/outputs/model_example \
+--verbose 1
 
-## 8. LightGBMで推論します。
-# 8.Run inference using LightGBM
+# まとめて処理
+bash scripts/train_model.sh
+```
+
+前処理済みの特徴量データと教師データ（ラベル画像）を用いて、LightGBMによる土地利用分類モデルの学習を行います。
+
+- 設定ファイル（train.yaml）から学習パラメータや入力データのパスを読み込み  
+  $\quad$train.yaml では後の推論データと重ならなように、2つの地域を教師データとしている。  
+  - data/example_run/Sentinel-2/kitakyusyu
+  - data/example_run/Sentinel-2/oita
+
+- NDVIやバンド値などの特徴量と、対応するラベル画像を読み込んで学習用データセットを作成
+- LightGBMの分類モデルを訓練データで学習
+- 学習過程や評価指標（例：精度、損失、混同行列など）を出力
+
+この処理により、衛星画像から土地利用を分類するための機械学習モデルが作成されます。
+
+## 8. LightGBMで推論します
+
+```bash
+# 個別に処理
+python -m src.pipeline.predict \
+--config configs/predict.yaml \
+--model-dir data/outputs/model_example \
+--input-dir "data/example_run/Sentinel-2/fukuoka" \
+--output-dir "data/outputs/prediction_example/fukuoka"
+
+# まとめて処理
 bash scripts/predict_sentinel2.sh
+```
+
+学習済みのLightGBMモデルを用いて、Sentinel-2データに対する土地利用分類の推論（予測）を行います。
+
+- 設定ファイル（predict.yaml）から推論パラメータや入力データのパスを読み込み
+- 特徴量データ（NDVIやバンド値など）を読み込み
+- 学習済みモデルをロードし、各ピクセルごとに土地利用クラスを予測
+- 予測結果をラスタ画像（GeoTIFF等）として保存
+
+この処理により、未知の地域や時期の衛星画像に対して土地利用分類結果を得ることができます。
+
+# 結果の検証
 
 
 # まとめ
-本記事では、衛星データの基本を知り、Google Earth Engine を用いて Sentinel-2 (L2A) データの雲除去処理を実装してみました。また、3つのアルゴリズムの性能を比較し、以下の知見を得ました。
 
- - QA60：処理が簡単で高速だが、精度に限界がある
- - s2cloudless：マシンラーニングベースの高精度手法。水域や薄雲の扱いに注意が必要
- - Cloud Score+：雲影もカバーし、最も網羅的な雲除去が可能（検出漏れが少ない）
 
-結果として、Cloud Score+ は誤検出が少なく、薄雲や雲影にも強いため、地表面の解析において有効な手法であることが確認できました。
-
-今後は、NDVI(植生を表す指標)などの指標計算への応用も検討していきたいと思います。
 
 
 

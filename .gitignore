@@ -105,3 +105,4 @@ configs - コピー/train.yaml
 configs - コピー/train.yaml:Zone.Identifier
 data_sentinel-hub/
 configs/sentinel-hub/
+src/utils/download_aws_pre.py

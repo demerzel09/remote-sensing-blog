@@ -12,9 +12,9 @@
             "module": "src.pipeline.download",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
-            "args": ["--config","configs/download_fukuoka.yaml",
-                "--name","fukuoka",
-                "--output","data/example_run"
+            "args": ["--config","configs/download_oita.yaml",
+                "--name","oita",
+                "--output","data/example_run_oita"
             ]
         },
         {
@@ -24,7 +24,7 @@
             "module": "src.pipeline.cloud_removal",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
-            "args": ["--input-dir","data/example_run/Sentinel-2/hita"]
+            "args": ["--input-dir","data/example_run/Sentinel-2/fukuoka"]
         },
         {
             "name": "Mosaic Data",
@@ -33,7 +33,7 @@
             "module": "src.pipeline.mosaic",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
-            "args": ["--input-dir","data/example_run/Sentinel-2/oita",
+            "args": ["--input-dir","data/example_run/Sentinel-2/fukuoka",
                     "--method","best"]
         },
         {

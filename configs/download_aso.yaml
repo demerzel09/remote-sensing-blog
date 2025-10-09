@@ -1,6 +1,8 @@
 provider: aws_cog
 lat: 32.891
 lon: 131.078
+#buffer: 0.1
+buffer_m: 10000
 start: '2024-01-01'
 end: '2024-02-28'
 max_cloud: 30
@@ -14,4 +16,3 @@ bands:
   - B11
   - SCL
   - dataMask
-buffer: 0.1

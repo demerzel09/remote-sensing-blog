@@ -10,12 +10,19 @@ from ..preprocess.cloudmask import cloud_mask
 
 def apply_cloud_mask(scene_dir: Path) -> None:
     """Mask cloudy pixels in all band files of a scene folder."""
+
     band_stack = scene_dir / "BANDS.tif"
     scl_file = scene_dir / "SCL.tif"
     mask_file = scene_dir / "MASK.tif"
 
     if not band_stack.exists() or not scl_file.exists():
         return
+
+    # BANDS.tifが存在し、BANDS_raw.tifが未作成ならバックアップ
+    band_stack_raw = scene_dir / "BANDS_raw.tif"
+    if band_stack.exists() and not band_stack_raw.exists():
+        import shutil
+        shutil.copy2(band_stack, band_stack_raw)
 
     mask = cloud_mask(scl_file, mask_file if mask_file.exists() else None)
 

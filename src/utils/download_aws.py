@@ -11,7 +11,7 @@
 """
 
 from __future__ import annotations
-import os, json, time, shutil
+import os, json, time, shutil, math
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -22,6 +22,7 @@ from tqdm import tqdm
 import numpy as np
 import rasterio
 from rasterio.windows import from_bounds
+from rasterio.transform import from_origin
 from rasterio.warp import transform_bounds, reproject, Resampling
 
 from shapely.geometry import shape as shp_shape, box as shp_box, mapping as shp_mapping, Point as shp_Point
@@ -376,6 +377,29 @@ def download_from_config(config_path: str | Path, output_dir: str | Path | None 
         raise ValueError("Config must include date range.")
     aoi_geojson = _to_geojson_aoi(cfg)
     bbox_deg = _aoi_bbox_lonlat(cfg)
+    # --- 共通グリッド（AOI起点）を確定 ---
+    target_res = float(cfg.get("target_res_m", 10))
+    # 決定するCRS: 明示EPSGがあればそれ、なければ中心点からUTM自動
+    if "target_crs_epsg" in cfg:
+        grid_crs = CRS.from_epsg(int(cfg["target_crs_epsg"]))
+    else:
+        if "center" in cfg and cfg["center"]:
+            _lon, _lat = float(cfg["center"]["lon"]), float(cfg["center"]["lat"])
+        else:
+            # bbox中心
+            _lon = (bbox_deg[0] + bbox_deg[2]) / 2.0
+            _lat = (bbox_deg[1] + bbox_deg[3]) / 2.0
+        grid_crs = _utm_crs_for_lonlat(_lon, _lat)
+
+    xmin, ymin, xmax, ymax = transform_bounds(CRS.from_epsg(4326), grid_crs, *bbox_deg, densify_pts=21)
+    # 解像度グリッドにスナップ（左上原点で固定）
+    xmin_s = math.floor(xmin / target_res) * target_res
+    ymax_s = math.ceil (ymax / target_res) * target_res
+    width  = int(math.ceil((xmax - xmin_s) / target_res))
+    height = int(math.ceil((ymax_s - ymin) / target_res))
+    grid_transform = from_origin(xmin_s, ymax_s, target_res, target_res)
+    grid_shape = (height, width)
+
 
     stac, col = DEFAULT_STAC, DEFAULT_COLLECTION
     dt, cloud = cfg["datetime"], cfg.get("cloud_cover_lt")
@@ -389,7 +413,7 @@ def download_from_config(config_path: str | Path, output_dir: str | Path | None 
     if need_mask and not any(a.lower() == "scl" for a in assets_internal):
         assets_internal.append("SCL")
 
-    base_dir = Path(output_dir or "data")
+    base_dir = Path(output_dir or "data").resolve()
     sub_dir = Path(satellite) / (name or cfg.get("name", "aws_stac"))
     out_root = base_dir / sub_dir
     _ensure_dir(out_root)
@@ -441,11 +465,39 @@ def download_from_config(config_path: str | Path, output_dir: str | Path | None 
                 base_crs = src.crs
                 base_prof = src.profile.copy()
                 base_mask = src.dataset_mask()
+            # 既存ファイルが共通グリッドと異なる場合は強制的に再保存して揃える
+            if (base_crs != grid_crs) or (base_transform != grid_transform) or (base_data.shape[1:] != grid_shape):
+                base_data = _reproject_to_grid(
+                    base_data, base_transform, base_crs,
+                    grid_transform, grid_crs, grid_shape,
+                    nearest=False
+                )
+                base_mask = _reproject_mask_to_grid(
+                    base_mask, base_transform, base_crs,
+                    grid_transform, grid_crs, grid_shape
+                )
+                base_transform = grid_transform
+                base_crs = grid_crs
+                _save_geotiff(base_out, base_data, base_crs, base_transform, base_prof, mask=base_mask)
         else:
             _download_file(base_href, tmp_base)
+            
             base_data, base_transform, base_crs, base_prof, base_mask = _clip_read(tmp_base, bbox_deg)
             tmp_base.unlink(missing_ok=True)
+            # 共通グリッドへ再投影（基準バンド）
+            base_data = _reproject_to_grid(
+                base_data, base_transform, base_crs,
+                grid_transform, grid_crs, grid_shape,
+                nearest=False
+            )
+            base_mask = _reproject_mask_to_grid(
+                base_mask, base_transform, base_crs,
+                grid_transform, grid_crs, grid_shape
+            )
+            base_transform = grid_transform
+            base_crs = grid_crs
             _save_geotiff(base_out, base_data, base_crs, base_transform, base_prof, mask=base_mask)
+
 
         # --- 修正: 残りのバンド処理（大小無視でスキップ判定） ---
         for req_name, href in asset_map.items():
@@ -464,14 +516,14 @@ def download_from_config(config_path: str | Path, output_dir: str | Path | None 
             )
             aligned = _reproject_to_grid(
                 data, src_transform, src_crs,
-                base_transform, base_crs,
-                (base_data.shape[1], base_data.shape[2]),
+                grid_transform, grid_crs,
+                grid_shape,
                 nearest=(req_name.lower() in ("scl","datamask")),
             )
             mask_aligned = _reproject_mask_to_grid(
                 mask_src, src_transform, src_crs,
-                base_transform, base_crs,
-                (base_data.shape[1], base_data.shape[2]),
+                grid_transform, grid_crs,
+                grid_shape,
             )
             _save_geotiff(
                 dst, aligned, base_crs, base_transform, base_prof,
