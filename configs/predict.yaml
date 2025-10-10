@@ -3,3 +3,5 @@
 features: features.npz
 # Path to the trained model relative to `--model-dir`.
 model: model.pkl
+difference_erode: 1
+difference_dilate: 1

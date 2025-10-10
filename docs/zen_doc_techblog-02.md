@@ -1,3 +1,17 @@
+---
+title: "リモセン02 - Sentinel-2データの土地利用分類 ー 衛星データ超入門 （Sentinel-2 編）"
+emoji: "🦅"
+type: "tech"
+topics:
+  - "宇宙"
+  - "gee"
+  - "sentinel2"
+  - "リモートセンシング"
+  - "雲除去"
+published: false
+publication_name: "fusic"
+---
+
 # 目的
  -  Sentinel-2データの土地利用分類。  
     Sentinel-2 は、ESA(欧州宇宙機関）が提供する リモートセンシングでもっともよくつかわれるフリーの高品質なデータです。  

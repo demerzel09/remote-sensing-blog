@@ -14,16 +14,8 @@ from ..preprocess.cloudmask import cloud_mask
 from ..preprocess.stack_bands import stack_bands
 from ..preprocess.features import compute_features
 from .preprocess import split_band_stack
-from ..utils.io_raster import write_raster
+from ..utils.morph_difference import apply_morphology, save_highlight_rgba
 import errno
-
-
-_DIFFERENCE_HIGHLIGHT_COLORMAP: Dict[int, Dict[int, Tuple[int, int, int, int]]] = {
-    1: {
-        0: (0, 0, 0, 0),        # transparent for matching pixels
-        1: (255, 0, 0, 255),    # red highlight for mismatches
-    }
-}
 
 
 def _safe_divide(numerator: float, denominator: float) -> Optional[float]:
@@ -187,7 +179,11 @@ def main() -> None:
     model_dir = Path(args.model_dir)
     output_dir = Path(args.output_dir)
 
+    difference_erode = int(cfg.get("difference_erode", 0))
+    difference_dilate = int(cfg.get("difference_dilate", 0))
+
     features_path = input_dir / "preprocess" / cfg["features"]
+    feature_valid_mask = None
     if features_path.exists():
         data = np.load(features_path)["features"]
         meta_path = (
@@ -197,6 +193,7 @@ def main() -> None:
         )
         with open(meta_path) as f:
             meta = json.load(f)
+        feature_valid_mask = np.all(np.isfinite(data), axis=0)
     else:
         dl_cfg_path = input_dir / "download.yaml"
         if dl_cfg_path.exists():
@@ -227,6 +224,7 @@ def main() -> None:
         mask = cloud_mask(scl_path, mask_path)
         stack, meta = stack_bands(bands, mask)
         data = compute_features(stack, red_idx=2, nir_idx=3, swir_idx=4)
+        feature_valid_mask = np.all(np.isfinite(data), axis=0)
 
     clf = _load_model_safely(model_dir / cfg["model"])
     out_path = output_dir / "prediction.tif"
@@ -235,8 +233,12 @@ def main() -> None:
 
     labels_path = input_dir / cfg.get("labels", "labels.tif")
     if labels_path.exists():
+        label_dataset_mask = None
+        label_nodata = None
         with rasterio.open(labels_path) as src:
             labels = src.read(1)
+            label_dataset_mask = src.dataset_mask()
+            label_nodata = src.nodata
 
         if labels.shape != predictions.shape:
             raise ValueError(
@@ -248,37 +250,35 @@ def main() -> None:
 
         # Export a binary mismatch highlight layer for visual inspection.
         difference_path = out_path.parent / "difference.tif"
-        highlight = np.full(predictions.shape, 255, dtype=np.uint8)
-        valid_diff_mask = labels > 0
-        if np.any(valid_diff_mask):
-            label_vals = labels[valid_diff_mask].astype(np.int32)
-            pred_vals = predictions[valid_diff_mask].astype(np.int32)
-            mismatch_mask = pred_vals != label_vals
+        valid_diff_mask = feature_valid_mask.copy() if feature_valid_mask is not None else np.ones_like(labels, dtype=bool)
+        if label_dataset_mask is not None and label_dataset_mask.size:
+            valid_diff_mask &= label_dataset_mask > 0
+        if label_nodata is not None:
+            valid_diff_mask &= labels != label_nodata
+        valid_diff_mask &= labels > 0
+        valid_diff_mask &= predictions > 0
 
-            highlight[valid_diff_mask] = mismatch_mask.astype(np.uint8)
+        mismatch_mask = (
+            predictions.astype(np.int32) != labels.astype(np.int32)
+        ) & valid_diff_mask
 
-            diff_meta = meta.copy()
-            diff_meta.update(count=1, dtype="uint8", nodata=255)
-            write_raster(
-                difference_path,
-                highlight[np.newaxis, ...],
-                diff_meta,
-                colormap=_DIFFERENCE_HIGHLIGHT_COLORMAP,
-            )
+        highlight_mask = apply_morphology(
+            mismatch_mask,
+            valid_diff_mask,
+            erode_count=difference_erode,
+            dilate_count=difference_dilate,
+        )
 
-            if metrics is not None:
-                total_pixels = int(mismatch_mask.size)
-                mismatch_pixels = int(mismatch_mask.sum())
-                metrics["difference_summary"] = {
-                    "mismatch_pixels": mismatch_pixels,
-                    "evaluated_pixels": total_pixels,
-                    "mismatch_rate": _safe_divide(mismatch_pixels, total_pixels),
-                    "values": {
-                        "match": 0,
-                        "mismatch": 1,
-                        "nodata": 255,
-                    },
-                }
+        save_highlight_rgba(difference_path, highlight_mask, meta, valid_diff_mask)
+
+        if metrics is not None:
+            total_pixels = int(valid_diff_mask.sum())
+            mismatch_pixels = int(highlight_mask.sum())
+            metrics["difference_summary"] = {
+                "mismatch_pixels": mismatch_pixels,
+                "evaluated_pixels": total_pixels,
+                "mismatch_rate": _safe_divide(mismatch_pixels, total_pixels),
+            }
 
         if metrics is not None:
             metrics_path = out_path.parent / "metrics.json"

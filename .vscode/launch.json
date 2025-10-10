@@ -105,6 +105,20 @@
             "--input-dir","data/example_run/Sentinel-2/fukuoka",
             "--model-dir","data/outputs/model_example",
             "--output-dir","data/outputs/prediction_example/fukuoka"]
+        },
+        {
+            "name": "Morph difference (Erode 1, Dilate 1)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "src.utils.morph_difference",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--root","data/outputs/prediction_example",
+                "--erode","1",
+                "--dilate","1",
+                "--overwrite"
+            ]
         }
     ]
 }

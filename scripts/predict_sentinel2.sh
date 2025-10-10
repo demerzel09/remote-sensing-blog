@@ -8,10 +8,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MODEL_DIR="data/outputs/model_example"
 CONFIG="configs/predict.yaml"
 
-python -m src.pipeline.predict --config "$CONFIG" \
-    --model-dir "$MODEL_DIR" \
-    --input-dir "data/example_run/Sentinel-2/fukuoka" \
-    --output-dir "data/outputs/prediction_example/fukuoka"
+# python -m src.pipeline.predict --config "$CONFIG" \
+#     --model-dir "$MODEL_DIR" \
+#     --input-dir "data/example_run/Sentinel-2/fukuoka" \
+#     --output-dir "data/outputs/prediction_example/fukuoka"
 
 python -m src.pipeline.predict --config "$CONFIG" \
     --model-dir "$MODEL_DIR" \

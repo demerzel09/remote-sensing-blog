@@ -1,3 +1,18 @@
+---
+title: "リモセン01 - Google Earth Engineではじめる ー 衛星データ超入門 （Sentinel-2 編）"
+emoji: "🦅"
+type: "tech"
+topics:
+  - "宇宙"
+  - "gee"
+  - "sentinel2"
+  - "リモートセンシング"
+  - "雲除去"
+published: true
+published_at: "2025-06-06 14:14"
+publication_name: "fusic"
+---
+
 # 目的
  -  Sentinel-2 (L2A) のデータの扱い方を知る
  -  Google Cloudの **GEE(Google Earth Engine)** を使ってデータを取得
