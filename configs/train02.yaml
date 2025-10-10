@@ -1,0 +1,21 @@
+# Training data directories containing the feature file listed below
+input_dirs:
+  - data/example_run/Sentinel-2/kitakyusyu
+  - data/example_run/Sentinel-2/karatzu
+  - data/example_run/Sentinel-2/aso
+  - data/example_run/Sentinel-2/oita
+  # - path/to/another/download_folder
+# Features are always stored under the `preprocess` directory of each
+# input folder. Only the file name is specified here.
+features: features.npz
+# Label raster inside each input directory
+labels: labels.tif
+model_name: model.pkl
+n_estimators: 100
+# Optional RandomForest parameters
+# max_depth: null   # e.g. 10
+# max_samples: null # e.g. 0.5 to use half the pixels per tree
+max_samples: 0.1 # e.g. 0.5 to use half the pixels per tree
+
+# Fraction of all pixels to randomly sample before training
+#sample_fraction: 0.2  # null or e.g. 0.1 for 10%
