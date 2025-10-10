@@ -211,10 +211,15 @@ def _clip_read(src_path: Path, bbox_lonlat, *, resampling=Resampling.bilinear):
     with rasterio.open(src_path) as src:
         xmin, ymin, xmax, ymax = transform_bounds(CRS.from_epsg(4326), src.crs, *bbox_lonlat, densify_pts=21)
         win = from_bounds(xmin, ymin, xmax, ymax, transform=src.transform).round_offsets().round_lengths()
-        data = src.read(window=win)
+        read_kwargs = {
+            "window": win,
+            "boundless": True,
+            "fill_value": (src.nodata if src.nodata is not None else 0),
+        }
+        data = src.read(**read_kwargs)
         transform = src.window_transform(win)
         profile = src.profile.copy()
-        mask = src.read_masks(1, window=win)
+        mask = src.read_masks(1, window=win, boundless=True)
         return data, transform, src.crs, profile, mask
 
 
@@ -379,17 +384,14 @@ def download_from_config(config_path: str | Path, output_dir: str | Path | None 
     bbox_deg = _aoi_bbox_lonlat(cfg)
     # --- 共通グリッド（AOI起点）を確定 ---
     target_res = float(cfg.get("target_res_m", 10))
-    # 決定するCRS: 明示EPSGがあればそれ、なければ中心点からUTM自動
-    if "target_crs_epsg" in cfg:
-        grid_crs = CRS.from_epsg(int(cfg["target_crs_epsg"]))
+    # 決定するCRS: 中心点からUTM自動
+    if "center" in cfg and cfg["center"]:
+        _lon, _lat = float(cfg["center"]["lon"]), float(cfg["center"]["lat"])
     else:
-        if "center" in cfg and cfg["center"]:
-            _lon, _lat = float(cfg["center"]["lon"]), float(cfg["center"]["lat"])
-        else:
-            # bbox中心
-            _lon = (bbox_deg[0] + bbox_deg[2]) / 2.0
-            _lat = (bbox_deg[1] + bbox_deg[3]) / 2.0
-        grid_crs = _utm_crs_for_lonlat(_lon, _lat)
+        # bbox中心
+        _lon = (bbox_deg[0] + bbox_deg[2]) / 2.0
+        _lat = (bbox_deg[1] + bbox_deg[3]) / 2.0
+    grid_crs = _utm_crs_for_lonlat(_lon, _lat)
 
     xmin, ymin, xmax, ymax = transform_bounds(CRS.from_epsg(4326), grid_crs, *bbox_deg, densify_pts=21)
     # 解像度グリッドにスナップ（左上原点で固定）
@@ -555,20 +557,16 @@ def download_from_config(config_path: str | Path, output_dir: str | Path | None 
         
         # 5) BANDS.tif 生成（オプション）
         if make_bands_tif:
-            # 順序決定：優先は bands_stack、無ければ YAMLの bands（assets_req）順
-            if bands_stack:
-                stack_order = list(bands_stack)
-            else:
-                # assets_req は YAMLのbands由来。ここから実在ファイルの候補に絞る
-                stack_order = []
-                for nm in assets_req:
-                    k = nm.lower()
-                    # dataMask は MASK.tif にマップ、visual/SCL等は任意で除外可
-                    if k in ("datamask", "mask", "b02", "b03", "b04", "b08", "b11"):
-                        stack_order.append(nm)
-                # 典型的には B02,B03,B04,dataMask を想定
-                if not stack_order:
-                    stack_order = ["B02","B03","B04","dataMask"]
+            # assets_req は YAMLのbands由来。ここから実在ファイルの候補に絞る
+            stack_order = []
+            for nm in assets_req:
+                k = nm.lower()
+                # dataMask は MASK.tif にマップ、visual/SCL等は任意で除外可
+                if k in ("datamask", "mask", "b02", "b03", "b04", "b08", "b11"):
+                    stack_order.append(nm)
+            # 典型的には B02,B03,B04,dataMask を想定
+            if not stack_order:
+                stack_order = ["B02","B03","B04","dataMask"]
 
             _build_bands_tif(date_dir, stack_order, out_name="BANDS.tif")
 

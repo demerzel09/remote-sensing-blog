@@ -1,7 +1,7 @@
 # 目的
  -  Sentinel-2データの土地利用分類。  
     Sentinel-2 は、ESA(欧州宇宙機関）が提供する リモートセンシングでもっともよくつかわれるフリーの高品質なデータです。  
-    土地利用分類の分類を自前で学習して分類してようという企画です。
+    土地利用分類の分類を自前で学習して分類してみようという企画です。
     リモートセンシングのデータの基礎操作を一通りやってみます。
 ![review](https://storage.googleapis.com/zenn-user-upload/fc63310d6e90-20250606.jpg)
 
@@ -36,7 +36,7 @@ $\quad$ESA公式の基本ポータル。
 - [Copernicus Open Access Hub](https://dataspace.copernicus.eu/)
 - アカウント登録（無料）が必要。
 - Webブラウザ上でエリア・期間・雲量などを指定して検索・ダウンロード可能。
-- ただしHPを操作して手動で zip ファイルを持ってくるなどの制限がある。
+- ただしHPを操作して手動で zip ファイルを持ってくる必要があるという制限がある。
 
 ### ② Sentinel Hub（Commercial API／無料枠あり）
 $\quad$ESA公式APIのデータを高速アクセス。
@@ -49,7 +49,10 @@ $\quad$クラウド上でSentinel-2データを直接処理できるプラット
 
 - ダウンロードせず、解析・可視化・雲除去などをスクリプトで実行可能。
 - [Google Earth Engine](https://earthengine.google.com/)
-
+- 登録が必要
+- 前回の Tech-Blogのお題  
+  https://zenn.dev/fusic/articles/d21ac63d8d3c69
+  
 ### ④ AWS Open Data Registry（Amazon S3）
 $\quad$Amazonがホストしているオープンデータセット。
 
@@ -60,8 +63,9 @@ $\quad$Amazonがホストしているオープンデータセット。
 ---
 
 今回は④ AWS Open Data Registryを利用します。
-②のSentinel Hub APIを使った自動ダウンロード例は、
-`src/utils/download_sentinel.py` および `configs/sentinel-hub/` で実装しています。興味がある方はそちらもご参照ください。
+②のSentinel Hub APIを使った自動ダウンロード例は、  
+`src/utils/download_sentinel.py` および `configs/sentinel-hub/` で実装しています。  
+興味がある方はそちらをご参照ください。
 
 
 # 実装
@@ -133,7 +137,7 @@ bash scripts/mosaic_sentinel2.sh
 この処理により、複数日時のデータから雲の影響を最小限に抑えた高品質な合成画像を得ることができます。
 
 
-## 4. WorldCoverという土地利用分類の教師データを集める
+## 4. ESA WorldCoverという土地利用分類の教師データを集める
 
 ```bash
 # 個別に処理

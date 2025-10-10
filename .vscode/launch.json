@@ -81,8 +81,7 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "--worldcover","data/wc2021_kyusyu_bbox",
-                //"--sentinel-dir","data/example_run/Sentinel-2/hita"
-                "--sentinel-dir","data/example_run/Sentinel-2/karatzu"
+                "--sentinel-dir","data/example_run/Sentinel-2/oita"
             ]
         },
         {

@@ -22,25 +22,12 @@ import yaml
 import numpy as np
 import rasterio
 from rasterio.merge import merge
-from rasterio.warp import reproject, Resampling
+from rasterio.warp import reproject, Resampling, transform_bounds
 from rasterio.windows import from_bounds
 from rasterio.coords import disjoint_bounds
 
 
-def parse_bbox(cfg: dict) -> tuple[float, float, float, float]:
-    """Return lon/lat bounding box from a download configuration."""
-    lat = cfg["lat"]
-    lon = cfg["lon"]
-    buffer = cfg.get("buffer", 0.0)
-    return (
-        lon - buffer,
-        lat - buffer,
-        lon + buffer,
-        lat + buffer,
-    )
-
-
-def load_reference_meta(sentinel_dir: Path, cfg: dict) -> dict:
+def load_reference_meta(sentinel_dir: Path, cfg: dict) -> tuple[dict, tuple[float, float, float, float]]:
     """Load raster metadata from a Sentinel band to match resolution and CRS."""
     band = cfg.get("bands", ["B02"])[0]
     path = sentinel_dir / f"{band}.tif"
@@ -51,9 +38,10 @@ def load_reference_meta(sentinel_dir: Path, cfg: dict) -> dict:
         path = tiffs[0]
     with rasterio.open(path) as src:
         meta = src.meta.copy()
+        bounds = transform_bounds(src.crs, "EPSG:4326", *src.bounds)
     # Ensure nodata is valid for uint8 output
     meta.update(count=1, dtype="uint8", nodata=0)
-    return meta
+    return meta, bounds
 
 
 def main() -> None:
@@ -78,9 +66,8 @@ def main() -> None:
     out_path = Path(args.output) if args.output is not None else s2_dir / "labels.tif"
 
     cfg = yaml.safe_load((s2_dir / "download.yaml").read_text())
-    bbox = parse_bbox(cfg)
 
-    meta = load_reference_meta(s2_dir, cfg)
+    meta, bbox = load_reference_meta(s2_dir, cfg)
 
     wc_files = sorted(wc_dir.glob("*.tif"))
     if not wc_files:
