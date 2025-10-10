@@ -15,6 +15,7 @@ from ..preprocess.stack_bands import stack_bands
 from ..preprocess.features import compute_features
 from .preprocess import split_band_stack
 from ..utils.io_raster import write_raster
+import errno
 
 
 _DIFFERENCE_HIGHLIGHT_COLORMAP: Dict[int, Dict[int, Tuple[int, int, int, int]]] = {
@@ -126,6 +127,51 @@ def _compute_core_metrics(
     }
 
 
+def _load_model_safely(model_path: Path):
+    """
+    Load a potentially large joblib model while providing clearer diagnostics when
+    system memory is insufficient. Falls back to the standard loader if memory
+    mapping is not supported and converts low-level ENOMEM errors into Python
+    exceptions so the caller can surface a readable message instead of the
+    interpreter being killed by the OS OOM killer.
+    """
+    model_path_str = str(model_path)
+    try:
+        return joblib.load(model_path_str, mmap_mode="r")
+    except TypeError:
+        # Some joblib versions do not support mmap on compressed pickles. Fall back.
+        pass
+    except MemoryError as exc:
+        raise RuntimeError(
+            f"Failed to memory-map model '{model_path}': insufficient RAM. "
+            "Consider reducing model size or increasing available memory."
+        ) from exc
+    except OSError as exc:
+        if getattr(exc, "errno", None) == errno.ENOMEM:
+            raise RuntimeError(
+                f"OS reported insufficient memory while loading '{model_path}'. "
+                "The model occupies several gigabytes; try retraining with fewer "
+                "estimators or enabling swap."
+            ) from exc
+        raise
+
+    try:
+        return joblib.load(model_path_str)
+    except MemoryError as exc:
+        raise RuntimeError(
+            f"Failed to load model '{model_path}' due to insufficient memory. "
+            "For large RandomForest models, lower 'n_estimators' or use "
+            "'sample_fraction' during training."
+        ) from exc
+    except OSError as exc:
+        if getattr(exc, "errno", None) == errno.ENOMEM:
+            raise RuntimeError(
+                f"OS reported insufficient memory while loading '{model_path}'. "
+                "Consider enabling swap or retraining a smaller model."
+            ) from exc
+        raise
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run model inference")
     parser.add_argument("--config", required=True, help="YAML config file")
@@ -182,7 +228,7 @@ def main() -> None:
         stack, meta = stack_bands(bands, mask)
         data = compute_features(stack, red_idx=2, nir_idx=3, swir_idx=4)
 
-    clf = joblib.load(model_dir / cfg["model"])
+    clf = _load_model_safely(model_dir / cfg["model"])
     out_path = output_dir / "prediction.tif"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     predictions = predict_model(clf, data, meta, out_path)

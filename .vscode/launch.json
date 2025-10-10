@@ -102,9 +102,9 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": ["--config","configs/predict.yaml",
-            "--input-dir","data/example_run/Sentinel-2/oita",
+            "--input-dir","data/example_run/Sentinel-2/fukuoka",
             "--model-dir","data/outputs/model_example",
-            "--output-dir","data/outputs/prediction_example/oita"]
+            "--output-dir","data/outputs/prediction_example/fukuoka"]
         }
     ]
 }

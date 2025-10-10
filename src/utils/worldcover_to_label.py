@@ -17,6 +17,7 @@ python -m src.utils.worldcover_to_label \
 from __future__ import annotations
 
 import argparse
+import math
 from pathlib import Path
 import yaml
 import numpy as np
@@ -92,12 +93,15 @@ def main() -> None:
         src.close()
 
     window = from_bounds(*bbox, transform=transform)
-    mosaic = mosaic[
-        :,
-        int(window.row_off) : int(window.row_off + window.height),
-        int(window.col_off) : int(window.col_off + window.width),
-    ]
-    transform = rasterio.windows.transform(window, transform)
+    row_start = max(0, math.floor(window.row_off))
+    col_start = max(0, math.floor(window.col_off))
+    row_stop = min(mosaic.shape[1], math.ceil(window.row_off + window.height))
+    col_stop = min(mosaic.shape[2], math.ceil(window.col_off + window.width))
+    if row_stop <= row_start or col_stop <= col_start:
+        raise RuntimeError("WorldCover mosaic clipping produced an empty window")
+    int_window = rasterio.windows.Window(col_start, row_start, col_stop - col_start, row_stop - row_start)
+    mosaic = mosaic[:, row_start:row_stop, col_start:col_stop]
+    transform = rasterio.windows.transform(int_window, transform)
 
     dest = np.zeros((1, meta["height"], meta["width"]), dtype=np.uint8)
     reproject(

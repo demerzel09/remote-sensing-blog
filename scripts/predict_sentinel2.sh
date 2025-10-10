@@ -15,6 +15,17 @@ python -m src.pipeline.predict --config "$CONFIG" \
 
 python -m src.pipeline.predict --config "$CONFIG" \
     --model-dir "$MODEL_DIR" \
+    --input-dir "data/example_run/Sentinel-2/aso" \
+    --output-dir "data/outputs/prediction_example/aso"
+
+python -m src.pipeline.predict --config "$CONFIG" \
+    --model-dir "$MODEL_DIR" \
+    --input-dir "data/example_run/Sentinel-2/hita" \
+    --output-dir "data/outputs/prediction_example/hita"
+
+# (For reference) train data by training model
+python -m src.pipeline.predict --config "$CONFIG" \
+    --model-dir "$MODEL_DIR" \
     --input-dir "data/example_run/Sentinel-2/oita" \
     --output-dir "data/outputs/prediction_example/oita"
 

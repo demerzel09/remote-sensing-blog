@@ -213,6 +213,7 @@ bash scripts/train_model.sh
   $\quad$train.yaml では後の推論データと重ならなように、2つの地域を教師データとしている。  
   - data/example_run/Sentinel-2/kitakyusyu
   - data/example_run/Sentinel-2/oita
+  - data/example_run/Sentinel-2/karatzu
 
 - NDVIやバンド値などの特徴量と、対応するラベル画像を読み込んで学習用データセットを作成
 - LightGBMの分類モデルを訓練データで学習

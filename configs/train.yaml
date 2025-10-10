@@ -2,6 +2,7 @@
 input_dirs:
   - data/example_run/Sentinel-2/kitakyusyu
   - data/example_run/Sentinel-2/oita
+  - data/example_run/Sentinel-2/karatzu
   # - path/to/another/download_folder
 # Features are always stored under the `preprocess` directory of each
 # input folder. Only the file name is specified here.
