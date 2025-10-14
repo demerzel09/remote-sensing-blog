@@ -1,23 +1,11 @@
----
-title: "リモセン02 - Sentinel-2データの土地利用分類 ー 衛星データ超入門 （Sentinel-2 編）"
-emoji: "🦅"
-type: "tech"
-topics:
-  - "宇宙"
-  - "gee"
-  - "sentinel2"
-  - "リモートセンシング"
-  - "雲除去"
-published: false
-publication_name: "fusic"
----
-
 # 目的
  -  Sentinel-2データの土地利用分類。  
     Sentinel-2 は、ESA(欧州宇宙機関）が提供する リモートセンシングでもっともよくつかわれるフリーの高品質なデータです。  
     土地利用分類の分類を自前で学習して分類してみようという企画です。
     リモートセンシングのデータの基礎操作を一通りやってみます。
-![review](https://storage.googleapis.com/zenn-user-upload/fc63310d6e90-20250606.jpg)
+
+!["world_cover_map"](https://storage.googleapis.com/zenn-user-upload/89ebddce57ff-20251010.jpg)
+
 
   ## 参考  
    - ### Sentinel-2 などの用語説明について  
@@ -83,6 +71,10 @@ $\quad$Amazonがホストしているオープンデータセット。
 
 
 # 実装
+
+こちらで実装を公開しています。
+https://github.com/demerzel09/remote-sensing-blog
+
 
 ## 1. 衛星データを取得
 
@@ -150,7 +142,6 @@ bash scripts/mosaic_sentinel2.sh
 
 この処理により、複数日時のデータから雲の影響を最小限に抑えた高品質な合成画像を得ることができます。
 
-
 ## 4. ESA WorldCoverという土地利用分類の教師データを集める
 
 ```bash
@@ -164,13 +155,29 @@ python -m src.utils.download_worldcover_datasets \
 bash scripts/download_worldcover_for_label.sh
 ```
 
-ESA WorldCover（2021年版など）の土地利用分類データを、指定した範囲（国名またはバウンディングボックス）で自動的にダウンロードします。
+!["world_cover_map"](https://storage.googleapis.com/zenn-user-upload/89ebddce57ff-20251010.jpg)
+
+上記のような ESA WorldCover（2021年版など）の土地利用分類データを、指定した範囲（国名またはバウンディングボックス）で自動的にダウンロードします。
 
  - 指定範囲に重なる3度×3度タイルのリストを自動で計算
  - 各タイルのGeoTIFF（例: ESA_WorldCover_10m_2021_v200_N33E130_Map.tif）をS3から取得
  - 国名指定（--country）もしくは緯度経度範囲（--bbox）で取得範囲を指定できます。
 
 取得したデータは後続のラベル生成や機械学習にそのまま活用できます。
+
+ラベルの内容は以下になります。
+ - 0 : データなし（マスク領域）
+ - 10 : 樹木被覆
+ - 20 : 低木地
+ - 30 : 草地
+ - 40 : 農地            
+ - 50 : 建物域（市街地）
+ - 60 : 裸地／疎植生地   
+ - 70 : 雪氷域　        
+ - 80 : 常時水域
+ - 90 : 湿地（草本湿地） 
+ - 95 : マングローブ
+ - 100 : コケ・地衣類
 
 
 ## 5. NDVI(植生/NDWI・水指数）を特徴量として計算  
@@ -209,7 +216,7 @@ WorldCoverの土地利用分類データ（ラベル画像）と、Sentinel-2の
 
 この処理により、衛星画像と正解ラベルが対応した教師データセットを生成、土地利用分類などの機械学習タスクに活用できます。
 
-## 7. LightGBMで、学習
+## 7. RandomForestで、学習
 ```bash
 # 個別に処理
 python -m src.pipeline.train \
@@ -221,7 +228,7 @@ python -m src.pipeline.train \
 bash scripts/train_model.sh
 ```
 
-前処理済みの特徴量データと教師データ（ラベル画像）を用いて、LightGBMによる土地利用分類モデルの学習を行います。
+前処理済みの特徴量データと教師データ（ラベル画像）を用いて、RandomForestによる土地利用分類モデルの学習を行います。
 
 - 設定ファイル（train.yaml）から学習パラメータや入力データのパスを読み込み  
   $\quad$train.yaml では後の推論データと重ならなように、2つの地域を教師データとしている。  
@@ -230,12 +237,14 @@ bash scripts/train_model.sh
   - data/example_run/Sentinel-2/karatzu
 
 - NDVIやバンド値などの特徴量と、対応するラベル画像を読み込んで学習用データセットを作成
-- LightGBMの分類モデルを訓練データで学習
+- RandomForestの分類モデルを訓練データで学習
 - 学習過程や評価指標（例：精度、損失、混同行列など）を出力
 
 この処理により、衛星画像から土地利用を分類するための機械学習モデルが作成されます。
 
-## 8. LightGBMで推論します
+!["gakusyu_area"](https://storage.googleapis.com/zenn-user-upload/a4270df679f5-20251010.jpg)
+
+## 8. RandomForestで推論します
 
 ```bash
 # 個別に処理
@@ -249,21 +258,68 @@ python -m src.pipeline.predict \
 bash scripts/predict_sentinel2.sh
 ```
 
-学習済みのLightGBMモデルを用いて、Sentinel-2データに対する土地利用分類の推論（予測）を行います。
+学習済みのRandomForestモデルを用いて、Sentinel-2データに対する土地利用分類の推論（予測）を行います。
 
 - 設定ファイル（predict.yaml）から推論パラメータや入力データのパスを読み込み
 - 特徴量データ（NDVIやバンド値など）を読み込み
 - 学習済みモデルをロードし、各ピクセルごとに土地利用クラスを予測
 - 予測結果をラスタ画像（GeoTIFF等）として保存
 
+- 学習データで使っていない以下の地域の推論を行った。
+  - data/example_run/Sentinel-2/fukuoka
+  - data/example_run/Sentinel-2/hita
+
 この処理により、未知の地域や時期の衛星画像に対して土地利用分類結果を得ることができます。
 
 # 結果の検証
 
+### 推論結果
+  左から、推論結果(predict.tif), 正解ラベル（label.tif)との差分, 元の衛星データ になります。
+  - 水田のラベル(地上の水域）をうまく推論できない。
+  - asoの推論では、教師データに火山の岩山のような地形がないので、岩肌の分類ができていない。  
+
+  今回使った学習データの NDVI の特徴量だけでは、地上の水域と、植生の緑、岩肌の区別 が
+  できなかったようです。
+  また、下記の 土地利用分類ののラベルを学習するにはデータバリエーションが足りない印象です。
+   - 0 : データなし（マスク領域）
+   - 10 : 樹木被覆
+   - 20 : 低木地
+   - 30 : 草地
+   - 40 : 農地             ← 学習データほぼなし
+   - 50 : 建物域（市街地）
+   - 60 : 裸地／疎植生地    ← 学習データほぼなし
+   - 70 : 雪氷域           ← 学習データほぼなし
+   - 80 : 常時水域
+   - 90 : 湿地（草本湿地）
+   - 95 : マングローブ
+   - 100 : コケ・地衣類
+    
+
+
+  - fukuoka
+  !["fukuoka"](https://storage.googleapis.com/zenn-user-upload/fde02c3d17e7-20251010.jpg)
+  - hita
+  !["hita"](https://storage.googleapis.com/zenn-user-upload/bdec5f81cdcb-20251010.jpg)
+  - aso
+  !["aso"](https://storage.googleapis.com/zenn-user-upload/fa46a5e257c8-20251010.jpg)
+
+### 学習データを改善してみた場合
+
+  学習に使った地域は、水田が少なく、岩場もない。多様性が少ないといえる。
+  !["gakusyu_area"](https://storage.googleapis.com/zenn-user-upload/a4270df679f5-20251010.jpg)
+
+  水田と岩場など豊富な環境があるasoを加えて学習し推論してみた。(左：前回、右：asoを増やした結果)
+  水田の誤検出が面積比では30%以上減っているように見える。
+  - fukuoka
+  !["fukuoka_before_after"](https://storage.googleapis.com/zenn-user-upload/df69812f97b6-20251010.jpg)
+  - hita
+  !["hita_before_after"](https://storage.googleapis.com/zenn-user-upload/e73eec0d4b7c-20251010.jpg)
+
+  より改良を行っていく場合には、以下が考えられます。
+  - 照度差や季節差の影響を低減する前処理（明るさの正規化、対照的な指標の追加）  
+  - クラス不均衡への対策（重み付け・層別サンプリング） 
+  - NDVI/NDWI 以外のNDMI/NBR/MSAVI/EVIなどの特徴量の導入
 
 # まとめ
-
-
-
-
-
+Sentinel-2 の L2A データを AWS COG から取得し、雲除去・モザイク統合を経て ESA WorldCover の教師ラベルと組み合わせ、NDVI/NDWI などの特徴量を計算して土地利用分類モデルを自前で学習・推論する手順を一通りやってみました。  
+RandomForestを使った学習で、少ない学習データで、それなりの精度が出せることがわかりましたが、これをベースに、前処理や特徴量、データセットのクラス不均衡対策などで精度アップしていく余地があります。
