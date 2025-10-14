@@ -1,17 +1,3 @@
----
-title: "リモセン02 - Sentinel-2データの土地利用分類 ー 衛星データ超入門 （Sentinel-2 編）"
-emoji: "🦅"
-type: "tech"
-topics:
-  - "宇宙"
-  - "gee"
-  - "sentinel2"
-  - "リモートセンシング"
-  - "雲除去"
-published: false
-publication_name: "fusic"
----
-
 # 目的
  -  Sentinel-2データの土地利用分類。  
     Sentinel-2 は、ESA(欧州宇宙機関）が提供する リモートセンシングでもっともよくつかわれるフリーの高品質なデータです。  
@@ -85,6 +71,10 @@ $\quad$Amazonがホストしているオープンデータセット。
 
 
 # 実装
+
+こちらで実装を公開しています。
+https://github.com/demerzel09/remote-sensing-blog
+
 
 ## 1. 衛星データを取得
 
@@ -180,12 +170,12 @@ bash scripts/download_worldcover_for_label.sh
  - 10 : 樹木被覆
  - 20 : 低木地
  - 30 : 草地
- - 40 : 農地
+ - 40 : 農地            
  - 50 : 建物域（市街地）
- - 60 : 裸地／疎植生地
- - 70 : 雪氷域
+ - 60 : 裸地／疎植生地   
+ - 70 : 雪氷域　        
  - 80 : 常時水域
- - 90 : 湿地（草本湿地）
+ - 90 : 湿地（草本湿地） 
  - 95 : マングローブ
  - 100 : コケ・地衣類
 
@@ -226,7 +216,7 @@ WorldCoverの土地利用分類データ（ラベル画像）と、Sentinel-2の
 
 この処理により、衛星画像と正解ラベルが対応した教師データセットを生成、土地利用分類などの機械学習タスクに活用できます。
 
-## 7. LightGBMで、学習
+## 7. RandomForestで、学習
 ```bash
 # 個別に処理
 python -m src.pipeline.train \
@@ -238,7 +228,7 @@ python -m src.pipeline.train \
 bash scripts/train_model.sh
 ```
 
-前処理済みの特徴量データと教師データ（ラベル画像）を用いて、LightGBMによる土地利用分類モデルの学習を行います。
+前処理済みの特徴量データと教師データ（ラベル画像）を用いて、RandomForestによる土地利用分類モデルの学習を行います。
 
 - 設定ファイル（train.yaml）から学習パラメータや入力データのパスを読み込み  
   $\quad$train.yaml では後の推論データと重ならなように、2つの地域を教師データとしている。  
@@ -247,14 +237,14 @@ bash scripts/train_model.sh
   - data/example_run/Sentinel-2/karatzu
 
 - NDVIやバンド値などの特徴量と、対応するラベル画像を読み込んで学習用データセットを作成
-- LightGBMの分類モデルを訓練データで学習
+- RandomForestの分類モデルを訓練データで学習
 - 学習過程や評価指標（例：精度、損失、混同行列など）を出力
 
 この処理により、衛星画像から土地利用を分類するための機械学習モデルが作成されます。
 
 !["gakusyu_area"](https://storage.googleapis.com/zenn-user-upload/a4270df679f5-20251010.jpg)
 
-## 8. LightGBMで推論します
+## 8. RandomForestで推論します
 
 ```bash
 # 個別に処理
@@ -268,7 +258,7 @@ python -m src.pipeline.predict \
 bash scripts/predict_sentinel2.sh
 ```
 
-学習済みのLightGBMモデルを用いて、Sentinel-2データに対する土地利用分類の推論（予測）を行います。
+学習済みのRandomForestモデルを用いて、Sentinel-2データに対する土地利用分類の推論（予測）を行います。
 
 - 設定ファイル（predict.yaml）から推論パラメータや入力データのパスを読み込み
 - 特徴量データ（NDVIやバンド値など）を読み込み
@@ -295,10 +285,10 @@ bash scripts/predict_sentinel2.sh
    - 10 : 樹木被覆
    - 20 : 低木地
    - 30 : 草地
-   - 40 : 農地
+   - 40 : 農地             ← 学習データほぼなし
    - 50 : 建物域（市街地）
-   - 60 : 裸地／疎植生地
-   - 70 : 雪氷域
+   - 60 : 裸地／疎植生地    ← 学習データほぼなし
+   - 70 : 雪氷域           ← 学習データほぼなし
    - 80 : 常時水域
    - 90 : 湿地（草本湿地）
    - 95 : マングローブ
@@ -325,12 +315,11 @@ bash scripts/predict_sentinel2.sh
   - hita
   !["hita_before_after"](https://storage.googleapis.com/zenn-user-upload/e73eec0d4b7c-20251010.jpg)
 
+  より改良を行っていく場合には、以下が考えられます。
+  - 照度差や季節差の影響を低減する前処理（明るさの正規化、対照的な指標の追加）  
+  - クラス不均衡への対策（重み付け・層別サンプリング） 
+  - NDVI/NDWI 以外のNDMI/NBR/MSAVI/EVIなどの特徴量の導入
 
 # まとめ
-Sentinel-2 の L2A データを AWS COG から取得し、雲除去・モザイク統合を経て ESA WorldCover の教師ラベルと組み合わせ、NDVI/NDWI などの特徴量を計算して土地利用分類モデルを自前で学習・推論する手順を一通りやってみました。
-これをベースに今後もリモセンの技術リサーチを続けていきます。
-
-
-
-
-
+Sentinel-2 の L2A データを AWS COG から取得し、雲除去・モザイク統合を経て ESA WorldCover の教師ラベルと組み合わせ、NDVI/NDWI などの特徴量を計算して土地利用分類モデルを自前で学習・推論する手順を一通りやってみました。  
+RandomForestを使った学習で、少ない学習データで、それなりの精度が出せることがわかりましたが、これをベースに、前処理や特徴量、データセットのクラス不均衡対策などで精度アップしていく余地があります。
